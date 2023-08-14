@@ -4,7 +4,7 @@
 
     <!-- Colours -->
     <SolidColorBrush x:Key="HMM.Window.DialogBottom" Color="#FF353536"/>
-    <SolidColorBrush x:Key="HMM.Window.AccentBrush" Color="#FF0066CC"/>
+    <SolidColorBrush x:Key="HMM.Window.AccentBrush" Color="##BC0000"/>
     <SolidColorBrush x:Key="HMM.Window.HeaderAccentBrush" Color="#FF0066CC"/>
     <SolidColorBrush x:Key="HMM.Window.AccentBrush1" Color="#FF007ACC"/>
     <SolidColorBrush x:Key="HMM.Window.AccentBrush2" Color="#FF017ACC"/>
