@@ -80,8 +80,8 @@ namespace HedgeModManager
         public static string UserAgent { get; }
             = $"Mozilla/5.0 (compatible; HedgeModManager/{VersionString})";
 
-        public const string RepoOwner = "thesupersonic16";
-        public const string RepoName = "hedgemodmanager";
+        public const string RepoOwner = "revocelotmgs";
+        public const string RepoName = "risingmodmanager";
         public const string RepoBranch = "rewrite";
         public static string RepoCommit = HMMResources.Version.Trim();
 
