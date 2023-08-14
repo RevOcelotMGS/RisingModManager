@@ -53,6 +53,7 @@
     <Resource Include="Resources\Graphics\Games\SonicLostWorld.png" />
     <Resource Include="Resources\Graphics\Games\SonicOrigins.png" />
     <Resource Include="Resources\Graphics\Games\Tokyo2020.png" />
+    <Resource Include="Resources\Graphics\Games\MetalGearRising.png" />
     <Resource Include="Resources\Graphics\icon256.png" />
     <Resource Include="Resources\Graphics\splash.png" />
   </ItemGroup>
