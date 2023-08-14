@@ -2,6 +2,6 @@
 Patch "Disable Intro Videos" by "PCGamingWiki" in "Enhancements" does "Skips the annoying intro videos on game startup."
 WriteProtected<byte>(ASLR(0x00A52C9A), 0xEB);
 
-Patch "Infinite Wig B Fix" by "Silent the GTA SA SilentPatch guy" in "Fixes" does "Allows you to use Ripper Mode and Blade Mode consecutively with Infinite Wig B"
+Patch "Infinite Wig B Fix" by "Silent the GTA SA SilentPatch guy" in "Fixes" does "Allows you to use Ripper Mode and Blade Mode consecutively with Infinite Wig B."
 WriteProtected<byte>(ASLR(0x00BF1B3E), 0xEB);
 WriteProtected<byte>(ASLR(0x00BC33B5), 0xEB);
