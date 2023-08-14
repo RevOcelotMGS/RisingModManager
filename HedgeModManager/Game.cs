@@ -147,6 +147,20 @@ namespace HedgeModManager
             CodesURL = Resources.URL_RANGERS_CODES,
             GamePath = Path.Combine("SonicFrontiers", "SonicFrontiers.exe")
         };
+        public static Game MetalGearRising = new Game()
+        {
+            GameName = "MetalGearRising",
+            ExecutableName = "METAL GEAR RISING REVENGEANCE.exe",
+            SupportsCPKREDIR = true,
+            SupportsSaveRedirection = false,
+            Folders = new[] { "data000" },
+            AppID = "235460",
+            GBProtocol = "hedgemmmgr",
+            Is64Bit = true,
+            ModLoader = ModLoaders.HE1ModLoader,
+            CodesURL = Resources.URL_RANGERS_CODES,
+            GamePath = Path.Combine("METAL GEAR RISING REVENGEANCE", "METAL GEAR RISING REVENGEANCE.exe")
+        };
 
         public static IEnumerable<Game> GetSupportedGames()
         {
@@ -158,6 +172,7 @@ namespace HedgeModManager
             yield return SonicColorsUltimate;
             yield return SonicOrigins;
             yield return SonicFrontiers;
+            yield return MetalGearRising;
         }
     }
 
