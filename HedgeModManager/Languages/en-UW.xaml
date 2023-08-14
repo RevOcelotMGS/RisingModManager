@@ -249,8 +249,9 @@
     <system:String x:Key="GamePuyoPuyoTetris2">puyo puyo t-tetwis 2</system:String>
     <system:String x:Key="GameTokyo2020">owympic games tokyo 2020</system:String>
     <system:String x:Key="GameSonicColorsUltimate">sonic c-cowouws: uwtimate</system:String>
-    <system:String x:Key="GameSonicOrigins">sonic owigins</system:String>
+    <system:String x:Key="GameSonicOrigins">sonic owogins</system:String>
     <system:String x:Key="GameSonicFrontiers">sonic fwontiews</system:String>
+    <system:String x:Key="GameMetalGearRising">metal geawe wising: wevengeance</system:String>
     <system:String x:Key="GameNoGame">no g-game detected!</system:String>
     <system:String x:Key="LauncherSteam">steam</system:String>
     <system:String x:Key="LauncherEpic">epic g-games</system:String>
