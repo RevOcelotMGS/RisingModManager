@@ -149,7 +149,7 @@ Do you want run the HMM Auto Installer?</value>
     <value>https://github.com/thesupersonic16/HedgeModManager/raw/rewrite/HedgeModManager/Resources/ModLoader/SonicGenerationsCodeLoader.dll</value>
   </data>
   <data name="URL_HE1ML_DL" xml:space="preserve">
-    <value>https://github.com/thesupersonic16/HedgeModManager/raw/rewrite/HedgeModManager/Resources/ModLoader/HE1ML.dll</value>
+    <value>https://github.com/RevOcelotMGS/RisingModManager/raw/rewrite/HedgeModManager/Resources/ModLoader/HE1ML.dll</value>
   </data>
   <data name="URL_HE2ML_DL" xml:space="preserve">
     <value>https://github.com/thesupersonic16/HedgeModManager/raw/rewrite/HedgeModManager/Resources/ModLoader/HE2ModLoader.dll</value>
@@ -158,16 +158,16 @@ Do you want run the HMM Auto Installer?</value>
     <value>https://raw.githubusercontent.com/thesupersonic16/HedgeModManager/rewrite/HedgeModManager/Resources/Codesv2/SonicOrigins.hmm</value>
   </data>
   <data name="URL_HML_DL" xml:space="preserve">
-    <value>https://github.com/thesupersonic16/HedgeModManager/raw/rewrite/HedgeModManager/Resources/ModLoader/HiteModLoader.dll</value>
+    <value>https://github.com/RevOcelotMGS/RisingModManager/raw/rewrite/HedgeModManager/Resources/ModLoader/HiteModLoader.dll</value>
   </data>
   <data name="URL_HMM_DEV" xml:space="preserve">
-    <value>https://nightly.link/thesupersonic16/HedgeModManager/suites/{0}/artifacts/{1}</value>
+    <value>https://nightly.link/RevOcelotMGS/RisingModManager/suites/{0}/artifacts/{1}</value>
   </data>
   <data name="URL_HMM_GITHUB" xml:space="preserve">
-    <value>https://github.com/thesupersonic16/HedgeModManager</value>
+    <value>https://github.com/RevOcelotMGS/RisingModManager</value>
   </data>
   <data name="URL_HMM_LOADERS" xml:space="preserve">
-    <value>https://raw.githubusercontent.com/thesupersonic16/HedgeModManager/rewrite/HedgeModManager/Resources/ModLoader/Loaders.ini</value>
+    <value>https://raw.githubusercontent.com/RevOcelotMGS/RisingModManager/rewrite/HedgeModManager/Resources/ModLoader/Loaders.ini</value>
   </data>
   <data name="URL_LCL_DL" xml:space="preserve">
     <value>https://github.com/thesupersonic16/HedgeModManager/raw/rewrite/HedgeModManager/Resources/ModLoader/LostCodeLoader.dll</value>
