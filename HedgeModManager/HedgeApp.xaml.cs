@@ -61,7 +61,7 @@ namespace HedgeModManager
         public static Version Version = Assembly.GetExecutingAssembly().GetName().Version;
         public static string StartDirectory = AppDomain.CurrentDomain.BaseDirectory;
         public static string AppPath = Path.Combine(StartDirectory, AppDomain.CurrentDomain.FriendlyName);
-        public static string ProgramName = "Hedge Mod Manager";
+        public static string ProgramName = "Rising Mod Manager";
         public static string VersionString = $"{Version.Major}.{Version.Minor}-{Version.Revision}";
         public static string ModsDbPath;
         public static string ConfigPath;
