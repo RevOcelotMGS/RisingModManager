@@ -156,7 +156,7 @@ namespace HedgeModManager
             Folders = new[] { "data000" },
             AppID = "235460",
             GBProtocol = "hedgemmmgr",
-            Is64Bit = true,
+            Is64Bit = false,
             ModLoader = ModLoaders.HE1ModLoader,
             CodesURL = "",
             GamePath = Path.Combine("METAL GEAR RISING REVENGEANCE", "METAL GEAR RISING REVENGEANCE.exe")
