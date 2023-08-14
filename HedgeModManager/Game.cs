@@ -158,7 +158,7 @@ namespace HedgeModManager
             GBProtocol = "hedgemmmgr",
             Is64Bit = false,
             ModLoader = ModLoaders.HE1ModLoader,
-            CodesURL = "",
+            CodesURL = "https://raw.githubusercontent.com/RevOcelotMGS/RisingModManager/rewrite/HedgeModManager/Resources/Codes.hmm",
             GamePath = Path.Combine("METAL GEAR RISING REVENGEANCE", "METAL GEAR RISING REVENGEANCE.exe")
         };
 
