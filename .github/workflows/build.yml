@@ -42,5 +42,5 @@ jobs:
 
     - uses: actions/upload-artifact@v3.1.2
       with:
-        name: HedgeModManager-${{matrix.configuration}}
+        name: RisingModManager-${{matrix.configuration}}
         path: ${{github.workspace}}\HedgeModManager\bin\${{matrix.configuration}}\net472
