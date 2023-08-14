@@ -1,9 +1,9 @@
 <h1>
-    <a href="#--------------------hedge-mod-manager">
-        <img width="48" align="left" src="https://github.com/thesupersonic16/HedgeModManager/raw/rewrite/HedgeModManager/Resources/Graphics/icon256.png">
+    <a href="#--------------------rising-mod-manager">
+        <img width="48" align="left" src="https://github.com/RevOcelotMGS/RisingModManager/raw/rewrite/HedgeModManager/Resources/Graphics/icon256.png">
     </a>
     Rising Mod Manager
-    <img src="https://github.com/thesupersonic16/HedgeModManager/actions/workflows/build.yml/badge.svg">
+    <img src="https://github.com/RevOcelotMGS/RisingModManager/actions/workflows/build.yml/badge.svg">
 </h1>
 
 A mod manager for Metal Gear Rising: Revengeance on PC.
