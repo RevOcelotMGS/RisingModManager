@@ -7,11 +7,11 @@ using System.Windows;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("HedgeModManager")]
-[assembly: AssemblyDescription("A mod manager for hedgehog engine games.")]
+[assembly: AssemblyTitle("Hedge Mod Manager")]
+[assembly: AssemblyDescription("A mod manager for Hedgehog Engine games.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("HedgeModManager")]
+[assembly: AssemblyProduct("Hedge Mod Manager")]
 [assembly: AssemblyCopyright("Copyright © NeverFinishAnything 2023")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -51,5 +51,5 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("7.10.0.2")]
-[assembly: AssemblyFileVersion("7.10.0.2")]
+[assembly: AssemblyVersion("7.10.0.3")]
+[assembly: AssemblyFileVersion("7.10.0.3")]

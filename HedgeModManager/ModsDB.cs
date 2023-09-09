@@ -26,6 +26,8 @@ namespace HedgeModManager
         public const string CompiledCodesName = "Codes.dll";
         public const string CodesTextPath = "Codes.hmm";
         public const string ExtraCodesTextPath = "ExtraCodes.hmm";
+        public const string InternalsDirectory = ".hedgemm";
+        public static readonly string WorkCodesPath = Path.Combine("work", "Codes");
 
         public CodeFile CodesDatabase = new CodeFile();
         public List<ModInfo> Mods = new List<ModInfo>();
@@ -228,7 +230,37 @@ namespace HedgeModManager
                         codes.AddRange(mod.Codes.Codes);
                 }
 
-                await CodeProvider.CompileCodes(codes, Path.Combine(RootDirectory, CompiledCodesName), this);
+                var report = await CodeProvider.CompileCodes(codes, Path.Combine(RootDirectory, CompiledCodesName), this);
+                if (report.HasErrors)
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine("Error Compiling Codes");
+
+                    foreach (var file in report.Blocks)
+                    {
+                        if (!string.IsNullOrEmpty(file.Key))
+                        {
+                            sb.AppendLine($"    - {file.Key}");
+                        }
+
+                        foreach (var block in file.Value)
+                        {
+                            sb.AppendLine($"        {block.Severity} {block.Message}");
+                        }
+
+                        sb.AppendLine();
+                    }
+
+                    var dialog = new ExceptionWindow(new Exception(sb.ToString()))
+                    {
+                        Header =
+                        {
+                            Content = "Error Compiling Codes"
+                        },
+                        ReportRepository = "https://github.com/hedge-dev/HMMCodes"
+                    };
+                    dialog.ShowDialog();
+                }
             }
         }
 

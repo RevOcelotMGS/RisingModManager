@@ -59,7 +59,7 @@ Library "Blackboard" by "Hyper, ĐeäTh & Sajid"
 
             var fpGetNameHash = Marshal.GetDelegateForFunctionPointer<_tGetNameHash>(Read<IntPtr>(Read<IntPtr>(blackboardContent) + 1 * IntPtr.Size));
             
-            if (fpGetNameHash.Invoke() == StringMapOperation.ComputeHash(name))
+            if (fpGetNameHash() == StringMapOperation.ComputeHash(name))
             {
                 return (long)blackboardContent;
             }
@@ -277,6 +277,331 @@ Library "Collections" by "Sajid & Hyper"
     }
 }
 
+Library "Converse" by "Hyper & M&M"
+{
+    #include "Helpers" noemit
+
+    #lib "Memory"
+
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Runtime.InteropServices;
+    using System.Text;
+    using System.Text.RegularExpressions;
+
+    private static bool _isInitialised = false;
+
+    public enum Language : sbyte
+    {
+        Unknown = -1,
+        English,
+        French,
+        Italian,
+        German,
+        Spanish,
+        Polish,
+        Portuguese,
+        Russian,
+        Japanese,
+        ChineseTraditional,
+        ChineseSimplified,
+        Korean
+    }
+
+    private static sbyte _language = -1;
+
+    public class ReplacementString
+    {
+        public string Pattern { get; set; }
+
+        public string Replacement { get; set; }
+
+        public bool IsRegex { get; set; }
+
+        public ReplacementString(string in_pattern, string in_replacement, bool in_isRegex)
+        {
+            Pattern = in_pattern;
+            Replacement = in_replacement;
+            IsRegex = in_isRegex;
+        }
+    }
+
+    private static Dictionary<string, string> _redirectedStrings = new();
+    private static List<ReplacementString> _replacementStrings = new();
+
+    public delegate string TConverseNotifyAction(string key, string text);
+    private static List<TConverseNotifyAction> _converseNotifyActions = new();
+
+    UNMANAGED_FUNCTION(long, RedirectString, long pCnvrsKey, long pCnvrsText, int cnvrsTextLength)
+    {
+        if (pCnvrsKey == 0)
+            return pCnvrsText;
+
+        string cnvrsKey = Marshal.PtrToStringAnsi((IntPtr)pCnvrsKey);
+        string cnvrsText = pCnvrsText == 0 ? string.Empty : Marshal.PtrToStringUni((IntPtr)pCnvrsText);
+        IntPtr pData = IntPtr.Zero;
+
+        void MarshalString(string str)
+        {
+            int length = sizeof(int) + ((str.Length + 1) * sizeof(short));
+
+            pData = Marshal.AllocHGlobal(length);
+
+            var wideTextStart = pData + sizeof(int);
+            var wideText = Encoding.Unicode.GetBytes(str);
+            var wideTextEnd = wideTextStart + wideText.Length;
+            
+            Marshal.Copy(wideText, 0, wideTextStart, wideText.Length);
+            
+            // Null terminator.
+            Marshal.WriteInt16(wideTextEnd, 0);
+
+            pCnvrsText = (long)pData;
+            cnvrsTextLength = length;
+        }
+
+        string redirectResult = cnvrsText;
+        {
+            foreach (var entry in _redirectedStrings)
+            {
+                if (entry.Key == cnvrsKey)
+                    redirectResult = entry.Value;
+            }
+
+            if (redirectResult != cnvrsText)
+                MarshalString(redirectResult);
+        }
+
+        string notifyResult = redirectResult;
+        {
+            foreach (var action in _converseNotifyActions)
+                notifyResult = action(cnvrsKey, notifyResult);
+
+            if (notifyResult != cnvrsText)
+                MarshalString(notifyResult);
+        }
+
+        foreach (var entry in _replacementStrings)
+        {
+            string replacementResult = notifyResult;
+
+            if (entry.IsRegex)
+            {
+                replacementResult = new Regex(entry.Pattern).Replace(notifyResult, entry.Replacement);
+            }
+            else
+            {
+                replacementResult = notifyResult.Replace(entry.Pattern, entry.Replacement);
+            }
+
+            if (replacementResult != cnvrsText)
+                MarshalString(replacementResult);
+        }
+
+        if (pData != IntPtr.Zero)
+        {
+            // Wide string length.
+            Marshal.WriteInt32(pData, cnvrsTextLength);
+            Marshal.FreeHGlobal(pData);
+        }
+        else if (pCnvrsText != 0)
+        {
+            /* No need to reallocate all strings,
+               return -1 and reload original pointer. */
+            pCnvrsText = -1;
+        }
+
+        return pCnvrsText;
+    }
+
+    private void Init()
+    {
+        if (_isInitialised)
+            return;
+
+        void ConverseHook(long addr)
+        {
+            WriteAsmHook
+            (
+                $@"
+                    mov  r8d, dword ptr [rsp + 0x1C8 + 0xFFFFFFFFFFFFFE60]
+                    mov  rcx, rsi
+                    mov  rax, {GET_UNMANAGED_FUNCTION_PTR(RedirectString)}
+                    call rax
+                    cmp  rax, 0
+                    jne  notNull
+                    mov  rdx, {(long)Marshal.StringToHGlobalUni(" ")}
+                    mov  r8d, 1
+                    jmp  exit
+                notNull:
+                    cmp  rax, -1
+                    je   notCustom
+                    lea  rdx, qword ptr [rax + 4]
+                    mov  r8d, dword ptr [rax]
+                    jmp  exit
+                notCustom:
+                    mov  rdx, qword ptr [rsp + 0x1C8 + 0xFFFFFFFFFFFFFE58]
+                    mov  r8d, dword ptr [rsp + 0x1C8 + 0xFFFFFFFFFFFFFE60]
+                exit:
+                    mov  rcx, qword ptr [rdi + 8]
+                    mov  rax, {Memory.ReadCall(addr + 0x09)}
+                    call rax
+                ",
+
+                addr,
+
+                HookBehavior.Replace
+            );
+        }
+
+        WriteNop
+        (
+            /* 0x14DA9000D */
+            ScanSignature
+            (
+                "\x0F\x84\xE8\x00\x00\x00\x48\x8D\x8F\xC8\x00\x00\x00",
+                "xxxxxxxxxxxxx"
+            ),
+            
+            6
+        );
+
+        ConverseHook
+        (
+            /* 0x14DA90041 */
+            ScanSignature
+            (
+                "\x44\x8B\x44\x24\x28\x48\x8B\x4F\x08\xE8\xCC\xCC\xCC\xCC\x48\x89\xC2\x48\x8B\x8F\xF0\x00\x00\x00",
+                "xxxxxxxxxx????xxxxxxxxxx"
+            )
+        );
+
+        WriteNop
+        (
+            /* 0x14DA900A6 */
+            ScanSignature
+            (
+                "\x74\x53\x44\x8B\x44\x24\x28",
+                "xxxxxxx"
+            ),
+            
+            2
+        );
+
+        ConverseHook
+        (
+            /* 0x14DA900A8 */
+            ScanSignature
+            (
+                "\x44\x8B\x44\x24\x28\x48\x8B\x4F\x08\xE8\xCC\xCC\xCC\xCC\x48\x89\xC2\x48\x89\xF9",
+                "xxxxxxxxxx????xxxxxx"
+            )
+        );
+
+        fixed (sbyte* p_language = &_language)
+        {
+            /* 0x140A14050 */
+            long sig = Memory.ReadCall
+            (
+                ScanSignature
+                (
+                    "\xE8\xCC\xCC\xCC\xCC\x48\x89\xC1\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C\x24\x30",
+                    "x????xxxx????xxxxx"
+                )
+            );
+
+            WriteAsmHook
+            (
+                $@"
+                    mov   rax, qword ptr [rcx + 8]
+                    movzx ecx, byte ptr [rax + 9]
+                    mov   rax, {(long)p_language}
+                    mov   byte ptr [rax], cl
+                    mov   rax, {Memory.ReadJump(sig + 8)}
+                    jmp   rax
+                ",
+
+                sig,
+
+                HookBehavior.Replace
+            );
+        }
+
+        _isInitialised = true;
+    }
+
+    public Language GetCurrentLanguage()
+    {
+        Init();
+
+        return (Language)_language;
+    }
+
+    public void AddConverseNotifyAction(TConverseNotifyAction action)
+    {
+        Init();
+
+        if (_converseNotifyActions.Contains(action))
+            return;
+
+        _converseNotifyActions.Add(action);
+    }
+
+    public void RemoveConverseNotifyAction(TConverseNotifyAction action)
+    {
+        Init();
+
+        if (!_converseNotifyActions.Contains(action))
+            return;
+
+        _converseNotifyActions.Remove(action);
+    }
+
+    public void Redirect(string key, string text)
+    {
+        Init();
+
+        if (_redirectedStrings.ContainsKey(key))
+        {
+            _redirectedStrings[key] = text;
+            return;
+        }
+
+        _redirectedStrings.Add(key, text);
+    }
+
+    public void Replace(string pattern, string replacement, bool isRegex = false)
+    {
+        Init();
+
+        if (string.IsNullOrEmpty(pattern))
+            return;
+
+        var first = _replacementStrings.FirstOrDefault(x => x.Pattern == pattern);
+        
+        if (first != null)
+        {
+            first.Replacement = replacement;
+            return;
+        }
+
+        _replacementStrings.Add(new ReplacementString(pattern, replacement, isRegex));
+    }
+
+    public void Restore(string key)
+    {
+        Init();
+
+        if (string.IsNullOrEmpty(key))
+            return;
+        
+        if (_redirectedStrings.ContainsKey(key))
+            _redirectedStrings.Remove(key);
+        
+        _replacementStrings.RemoveAll(x => x.Pattern == key);
+    }
+}
+
 Library "GameDocument" by "Hyper, ĐeäTh & Sajid"
 {
     #lib "Collections"
@@ -358,12 +683,22 @@ Library "GameMode" by "Hyper"
 {
     using System.Runtime.InteropServices;
 
-    private static bool _initialised = false;
+    private static bool _isInitialised = false;
+
+    public enum DestinationMode : sbyte
+    {
+        Unknown = -1,
+        GameModeStage,
+        GameModeCyberStage
+    }
+
+    private static sbyte _destinationMode = -1;
+    
     private static long _pGameModeName = 0;
 
-    private void Init()
+    public void Init()
     {
-        if (_initialised)
+        if (_isInitialised)
             return;
 
         fixed (long* p_pGameModeName = &_pGameModeName)
@@ -371,17 +706,26 @@ Library "GameMode" by "Hyper"
             WriteAsmHook
             (
                 $@"
-                    push   rax
-                    mov    rax, {(long)p_pGameModeName}
-                    mov    [rax], r8
-                    pop    rax
                     push   rbx
                     sub    rsp, 0x30
+                    cmp    r8, 0
+                    je     exit
+                    mov    rax, qword ptr [r8]
+                    mov    rbx, 0x65646F4D656D6147 ; GameMode
+                    cmp    rax, rbx
+                    mov    rax, {(long)p_pGameModeName}
+                    jne    unknown
+                    mov    qword ptr [rax], r8
+                    jmp    exit
+                unknown:
+                    mov    rbx, {(long)Marshal.StringToHGlobalAnsi("GameModeUnknown")}
+                    mov    qword ptr [rax], rbx
+                exit:
                     mov    rbx, rcx
                     movaps xmmword ptr [rsp + 0x38 + 0xFFFFFFFFFFFFFFE8], xmm6
                 ",
 
-                /* 0x146C74440 */
+                /* 0x146BEA180 */
                 ScanSignature
                 (
                     "\x40\x53\x48\x83\xEC\x30\x48\x89\xCB\x0F\x29\x74\x24\x20\x48\x83\xE9\x80\x0F\x28\xF1\xE8\xCC\xCC\xCC\xCC\x48\x85\xC0\x74\x12",
@@ -390,30 +734,46 @@ Library "GameMode" by "Hyper"
 
                 HookBehavior.Replace
             );
-                
+
+            WriteAsmHook
+            (
+                $@"
+                    mov   rcx, {(long)Marshal.StringToHGlobalAnsi("GameModeTitle")}
+                    mov   rdx, {(long)p_pGameModeName}
+                    mov   qword ptr [rdx], rcx
+                    mov   edx, 0x38
+                    mov   qword ptr [rdi], rax
+                    mov   rcx, rsi
+                    movsd xmm0, qword ptr [rbx]
+                ",
+
+                /* 0x1401D8EA4 */
+                ScanSignature
+                (
+                    "\xBA\x38\x00\x00\x00\x48\x89\x07",
+                    "xxxxxxxx"
+                ),
+
+                HookBehavior.Replace
+            );
+
             // Set if we're currently in Cyber Space.
             WriteAsmHook
             (
                 $@"
-                    push rdi
-                    sub  rsp, 0x20
-                    mov  rbx, r8
-                    mov  rdi, rdx
-                    mov  rsi, rcx
-                    push rax
-                    push rbx
-                    mov  rax, {(long)p_pGameModeName}
-                    mov  rbx, {(long)Marshal.StringToHGlobalAnsi("GameModeCyberStage")}
-                    mov  [rax], rbx
-                    pop  rbx
-                    pop  rax
+                    mov r8, {(long)Marshal.StringToHGlobalAnsi("GameModeCyberStage")}
+                    mov rcx, {(long)p_pGameModeName}
+                    mov qword ptr [rcx], r8
+                    mov r8d, 0x10
+                    mov qword ptr [rsi], rax
+                    lea rcx, qword ptr [rsi + 0x100]
                 ",
 
-                /* 0x1473C021A */
+                /* 0x147334264 */
                 ScanSignature
                 (
-                    "\x57\x48\x83\xEC\x20\x4C\x89\xC3\x48\x89\xD7\x48\x89\xCE\xE8\xCC\xCC\xCC\xCC\x48\x8D\x05\xCC\xCC\xCC\xCC\x41\xB8\x10\x00\x00\x00\x48\x89\x06\x48\x8D\x8E\x00\x01\x00\x00",
-                    "xxxxxxxxxxxxxxx????xxx????xxxxxxxxxxxxxxxx"
+                    "\x41\xB8\x10\x00\x00\x00\x48\x89\x06\x48\x8D\x8E\x00\x01\x00\x00\x0F\x10\x03\x0F\x11\x86\xE0\x00\x00\x00\x0F\x10\x4B\x10\x0F\x11\x8E\xF0\x00\x00\x00\x48\x8B\x13\xE8\xCC\xCC\xCC\xCC\x4C\x31\x05",
+                    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx????xxx"
                 ),
 
                 HookBehavior.Replace
@@ -423,111 +783,103 @@ Library "GameMode" by "Hyper"
             WriteAsmHook
             (
                 $@"
-                    mov  qword ptr [rsi + 0x1A8], rdi
-                    xor  ebp, ebp
-                    mov  qword ptr [rsi + 0x190], rbp
-                    push rax
-                    push rbx
-                    mov  rax, {(long)p_pGameModeName}
-                    mov  rbx, {(long)Marshal.StringToHGlobalAnsi("GameModeStage")}
-                    mov  [rax], rbx
-                    pop  rbx
-                    pop  rax
+                    mov qword ptr [rsi + 0x1A8], rbx
+                    mov rbp, {(long)Marshal.StringToHGlobalAnsi("GameModeStage")}
+                    mov rax, {(long)p_pGameModeName}
+                    mov qword ptr [rax], rbp
+                    xor ebp, ebp
+                    mov qword ptr [rsi + 0x190], rbp
                 ",
 
-                /* 0x1479E9DD1 */
+                /* 0x147967172 */
                 ScanSignature
                 (
-                    "\x48\x89\xBE\xA8\x01\x00\x00\x31\xED",
+                    "\x48\x89\x9E\xA8\x01\x00\x00\x31\xED",
                     "xxxxxxxxx"
                 ),
 
                 HookBehavior.Replace
             );
 
-            // Set if we're entering Cyber Space from Training Simulator.
-            WriteAsmHook
-            (
-                $@"
-                    movups xmm0, xmmword ptr [rax]
-                    movups xmmword ptr [rdi + 0xA0], xmm0
-                    movaps xmm0, xmmword ptr [rax + 0x10]
-                    push   rax
-                    push   rbx
-                    mov    rax, {(long)p_pGameModeName}
-                    mov    rbx, {(long)Marshal.StringToHGlobalAnsi("GameModeCyberStage")}
-                    mov    [rax], rbx
-                    pop    rbx
-                    pop    rax
-                ",
-
-                /* 0x14015023F */
-                ScanSignature
+            fixed (sbyte* p_destinationMode = &_destinationMode)
+            {
+                // Set if we're entering Cyber Space from Training Simulator.
+                WriteAsmHook
                 (
-                    "\x0F\x10\x00\x0F\x11\x87\xA0\x00\x00\x00\x0F\x28\x40\x10\x0F\x29\x87\xD0\x00\x00\x00\x0F\x28\x48\x20\x0F\x29\x8F\xE0\x00\x00\x00\x0F\x28\x40\x30\x0F\x29\x87\xF0\x00\x00\x00\x0F\x28\x48\x40\x0F\x29\x8F\x00\x01\x00\x00\x0F\x28\x40\x50\x48\x8B\x47\x10",
-                    "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                ),
-
-                HookBehavior.Replace
-            );
-
-            // Set if we're returning to an island from Training Simulator after quitting Cyber Space.
-            WriteAsmHook
-            (
-                $@"
-                    ; Restore original code.
-                    movups xmm0, xmmword ptr [rsp + 0x210 + 0xFFFFFFFFFFFFFE10]
-                    mov    qword ptr [rbp + 0x110 + 0xFFFFFFFFFFFFFFA0], rax
-                    mov    word ptr [rdi + 0x120], 0x101
-                    push   rax
-                    push   rbx
-                    mov    rax, {(long)p_pGameModeName}
-                    mov    rbx, {(long)Marshal.StringToHGlobalAnsi("GameModeStage")}
-                    mov    [rax], rbx
-                    pop    rbx
-                    pop    rax
-                ",
-
-                /* 0x14014E6E7 */
-                ScanSignature
+                    $@"
+                        mov    rdx, {(long)Marshal.StringToHGlobalAnsi("GameModeTutorial")}
+                        mov    rax, {(long)p_pGameModeName}
+                        mov    qword ptr [rax], rdx
+                        mov    rax, {(long)p_destinationMode}
+                        mov    byte ptr [rax], 1
+                        mov    rax, [rdi + 0x10]
+                        movaps xmmword ptr [rdi + 0x110], xmm0
+                        mov    rdx, [rax + 0x70]
+                    ",
+                    
+                    /* 0x14015AAA9 */
+                    ScanSignature
+                    (
+                        "\x48\x8B\x47\x10\x0F\x29\x87\x10\x01\x00\x00",
+                        "xxxxxxxxxxx"
+                    ),
+                    
+                    HookBehavior.Replace
+                );
+                
+                // Set if we're returning to an island from Training Simulator after quitting Cyber Space.
+                WriteAsmHook
                 (
-                    "\x0F\x10\x44\x24\x20\x48\x89\x85\xB0\x00\x00\x00\x66\xC7\x87\x20\x01\x00\x00\x01\x01",
-                    "xxxxxxxxxxxxxxxxxxxxx"
-                ),
+                    $@"
+                        ; Restore original code.
+                        movups xmm0, xmmword ptr [rsp + 0x210 + 0xFFFFFFFFFFFFFE10]
+                        mov    qword ptr [rbp + 0x110 + 0xFFFFFFFFFFFFFFA0], rax
+                        mov    word ptr [rdi + 0x120], 0x101
+                        mov    rcx, {(long)Marshal.StringToHGlobalAnsi("GameModeTutorial")}
+                        mov    rax, {(long)p_pGameModeName}
+                        mov    qword ptr [rax], rcx
+                        mov    rax, {(long)p_destinationMode}
+                        mov    byte ptr [rax], 0
+                    ",
+                    
+                    /* 0x140158D07 */
+                    ScanSignature
+                    (
+                        "\x0F\x10\x44\x24\x20\x48\x89\x85\xB0\x00\x00\x00\x66\xC7\x87\x20\x01\x00\x00\x01\x01",
+                        "xxxxxxxxxxxxxxxxxxxxx"
+                    ),
+                    
+                    HookBehavior.Replace
+                );
 
-                HookBehavior.Replace
-            );
-
-            // Set if we're returning to an island from Training Simulator after completing Cyber Space.
-            WriteAsmHook
-            (
-                $@"
-                    push rax
-                    xor  ebx, ebx
-                    mov  rax, {(long)Marshal.StringToHGlobalAnsi("w6d01")}
-                    lea  rcx, qword ptr [rax]
-                    mov  edx, ebx
-                    push rax
-                    push rbx
-                    mov  rax, {(long)p_pGameModeName}
-                    mov  rbx, {(long)Marshal.StringToHGlobalAnsi("GameModeStage")}
-                    mov  [rax], rbx
-                    pop  rbx
-                    pop  rax
-                ",
-
-                /* 0x14014E4B0 */
-                ScanSignature
+                // Set if we're returning to an island from Training Simulator after completing Cyber Space.
+                WriteAsmHook
                 (
-                    "\x33\xDB\x48\x8D\x0D\xCC\xCC\xCC\xCC\x8B\xD3",
-                    "xxxxx????xx"
-                ),
-
-                HookBehavior.Replace
-            );
+                    $@"
+                        mov rbx, {(long)Marshal.StringToHGlobalAnsi("w6d01")}
+                        lea rcx, qword ptr [rbx]
+                        mov rbx, {(long)Marshal.StringToHGlobalAnsi("GameModeTutorial")}
+                        mov rdx, {(long)p_pGameModeName}
+                        mov qword ptr [rdx], rbx
+                        mov rax, {(long)p_destinationMode}
+                        mov byte ptr [rax], 0
+                        xor ebx, ebx
+                        mov edx, ebx
+                    ",
+                    
+                    /* 0x140158AD0 */
+                    ScanSignature
+                    (
+                        "\x33\xDB\x48\x8D\x0D\xCC\xCC\xCC\xCC\x8B\xD3",
+                        "xxxxx????xx"
+                    ),
+                    
+                    HookBehavior.Replace
+                );
+            }
         }
 
-        _initialised = true;
+        _isInitialised = true;
     }
 
     public string GetName()
@@ -538,6 +890,11 @@ Library "GameMode" by "Hyper"
             return "GameModeUnknown";
 
         return Marshal.PtrToStringAnsi((IntPtr)_pGameModeName);
+    }
+
+    public DestinationMode GetTutorialDestination()
+    {
+        return (DestinationMode)_destinationMode;
     }
 }
 
@@ -601,6 +958,95 @@ Library "GameObject" by "Hyper, ĐeäTh & Sajid"
     }
 }
 
+Library "GameService" by "Hyper & Sajid"
+{
+    #include "Helpers" noemit
+
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Runtime.InteropServices;
+
+    private static bool _isInitialised = false;
+
+    private static List<long> _userServiceClassPtrs = new();
+
+    UNMANAGED_FUNCTION(long, CreateServices, long ppClasses)
+    {
+        var classes = new List<long>();
+
+        // Copy array contents to our list.
+        while (Read<long>(ppClasses) != 0)
+        {
+            classes.Add(Read<long>(ppClasses));
+            ppClasses += 8;
+        }
+
+        // Add user service class pointers.
+        foreach (long ptr in _userServiceClassPtrs)
+            classes.Add(ptr);
+        
+        classes.Add(0);
+
+        var classesArr = classes.ToArray();
+
+        fixed (long* pClasses = classesArr)
+            return (long)pClasses;
+    }
+
+    private void Init()
+    {
+        if (_isInitialised)
+            return;
+        
+        WriteAsmHook
+        (
+            $@"
+                push r14
+                sub  rsp, 0x20
+                mov  rax, qword ptr [rdx]
+                mov  r14, rdx
+                mov  rbx, rcx
+                mov  rcx, r14
+                mov  rdx, {GET_UNMANAGED_FUNCTION_PTR(CreateServices)}
+                call rdx
+                mov  r14, rax
+                mov  rax, qword ptr [rax]
+            ",
+
+            /* 0x147140C75 */
+            ScanSignature
+            (
+                "\x41\x56\x48\x83\xEC\x20\x48\x8B\x02\x49\x89\xD6",
+                "xxxxxxxxxxxx"
+            ),
+
+            HookBehavior.Replace
+        );
+
+        _isInitialised = true;
+    }
+
+    public void AddUserService(long ptr)
+    {
+        Init();
+
+        if (_userServiceClassPtrs.Contains(ptr))
+            return;
+
+        _userServiceClassPtrs.Add(ptr);
+    }
+
+    public void RemoveUserService(long ptr)
+    {
+        Init();
+        
+        if (!_userServiceClassPtrs.Contains(ptr))
+            return;
+
+        _userServiceClassPtrs.Remove(ptr);
+    }
+}
+
 Library "Helpers" by "Hyper"
 {
     #define UNMANAGED_FUNCTION(returnType, functionName, ...) \
@@ -631,21 +1077,73 @@ Library "HMM" by "Hyper"
     using System.Collections.Generic;
     using System.IO;
 
+    public class Mod
+    {
+        public string Name { get; set; }
+
+        public string Version { get; set; }
+
+        public string Author { get; set; }
+
+        public string Path { get; set; }
+
+        public Dictionary<string, Dictionary<string, string>> Ini { get; set; } = new();
+
+        public Mod(string modIniPath)
+        {
+            var ini = INI.Read(modIniPath);
+
+            if (ini == null)
+                return;
+
+            Name = ini["Desc"]["Title"];
+            Version = ini["Desc"]["Version"];
+            Author = ini["Desc"]["Author"];
+            Path = System.IO.Path.GetDirectoryName(modIniPath);
+            Ini = ini;
+        }
+    }
+
     public Dictionary<string, Dictionary<string, string>> GetModsDatabase()
     {
         string workingDir = Directory.GetCurrentDirectory();
         string cpkredirCfgPath = Path.Combine(workingDir, "cpkredir.ini");
 
         if (!File.Exists(cpkredirCfgPath))
-            return null;
+            return new();
 
         var cpkredirCfg = INI.Read(cpkredirCfgPath);
         string modsDbPath = cpkredirCfg["CPKREDIR"]["ModsDbIni"];
 
         if (!File.Exists(modsDbPath))
-            return null;
+            return new();
 
         return INI.Read(modsDbPath);
+    }
+
+    public List<Mod> GetMods()
+    {
+        List<Mod> result = new();
+
+        var modsDb = GetModsDatabase();
+
+        if (modsDb == null)
+            return result;
+
+        int activeModCount = INI.Parse<int>(modsDb["Main"]["ActiveModCount"], 0);
+
+        foreach (var entry in modsDb["Mods"].Keys)
+        {
+            for (int i = 0; i < activeModCount; i++)
+            {
+                if (modsDb["Main"][$"ActiveMod{i}"].Contains(entry))
+                {
+                    result.Add(new Mod(modsDb["Mods"][entry]));
+                }
+            }
+        }
+
+        return result;
     }
 
     public List<string> GetCodes()
@@ -655,10 +1153,25 @@ Library "HMM" by "Hyper"
         var modsDb = GetModsDatabase();
 
         if (modsDb == null)
-            return null;
+            return result;
 
         foreach (var value in modsDb["Codes"].Values)
             result.Add(value);
+
+        return result;
+    }
+
+    public List<Mod> FindModsByName(string name)
+    {
+        List<Mod> result = new();
+
+        foreach (var mod in GetMods())
+        {
+            if (mod.Name.Contains(name))
+            {
+                result.Add(mod);
+            }
+        }
 
         return result;
     }
@@ -713,6 +1226,39 @@ Library "INI" by "Hyper"
 
         return result;
     }
+
+    public T Parse<T>(string value, T defaultValue)
+    {
+        T result = defaultValue;
+
+        if (typeof(T) == typeof(string))
+        {
+            result = (T)(object)value;
+        }
+        else if (typeof(T) == typeof(int))
+        {
+            if (int.TryParse(value, out int intValue))
+            {
+                result = (T)(object)intValue;
+            }
+        }
+        else if (typeof(T) == typeof(double))
+        {
+            if (double.TryParse(value, out double doubleValue))
+            {
+                result = (T)(object)doubleValue;
+            }
+        }
+        else if (typeof(T) == typeof(float))
+        {
+            if (float.TryParse(value, out float floatValue))
+            {
+                result = (T)(object)floatValue;
+            }
+        }
+
+        return result;
+    }
 }
 
 Library "LevelInfo" by "Hyper, ĐeäTh & Sajid"
@@ -734,6 +1280,368 @@ Library "LevelInfo" by "Hyper, ĐeäTh & Sajid"
             return 0;
 
         return Read<long>((levelInfo + 0xC8) + (playerIndex * IntPtr.Size));
+    }
+}
+
+Library "Lua" by "Hyper & ĐeäTh"
+{
+    #include "Helpers" noemit
+
+    #lib "GameDocument"
+    #lib "GameMode"
+    #lib "GameService"
+    #lib "Memory"
+    #lib "StringMapOperation"
+
+    using System.Collections.Generic;
+    using System.IO;
+
+    private static bool _isInitialised = false;
+    private static bool _isScriptSequenceInactive = true;
+
+    private static List<string> _deniedGameModes = new()
+    {
+        "GameModeBattleRush",
+        "GameModeFishing",
+        "GameModeHacking",
+        "GameModeStage"
+    };
+
+    private static string _lastGameModeName = "GameModeUnknown";
+
+    private static long _pLuaState = 0;
+    private static long _sigScriptSequenceManagerStaticClassCtor = 0;
+
+    private static List<uint> _luaScripts = new();
+
+    #define LUA_TNONE          (-1)
+    #define LUA_TNIL           0
+    #define LUA_TBOOLEAN       1
+    #define LUA_TLIGHTUSERDATA 2
+    #define LUA_TNUMBER	       3
+    #define LUA_TSTRING	       4
+    #define LUA_TTABLE         5
+    #define LUA_TFUNCTION      6
+    #define LUA_TUSERDATA      7
+    #define LUA_TTHREAD        8
+    #define LUA_NUMTYPES       9
+
+    /* 0x153A6D900 */
+    private static long _sig_luaL_loadbufferx = ScanSignature("\x48\x83\xEC\x48\x48\x8B\x44\x24\x70\x48", "xxxxxxxxxx");
+    CREATE_FUNCTION_PTR(long, luaL_loadbufferx, _sig_luaL_loadbufferx, long L, long buff, long size, long name, long mode)
+
+    /* 0x140E6DB50 */
+    private static long _sig_lua_getglobal = Memory.ReadCall(ScanSignature("\xE8\xCC\xCC\xCC\xCC\x48\x8B\x0F\x48\x8B\xD3\xE8", "x????xxxxxxx"));
+    CREATE_FUNCTION_PTR(long, lua_getglobal, _sig_lua_getglobal, long L, long name)
+
+    /* 0x153959B30 */
+    private static long _sig_lua_pcallk = ScanSignature("\x48\x89\x74\x24\x18\x57\x48\x83\xEC\x40\x31\xF6", "xxxxxxxxxxxx");
+    CREATE_FUNCTION_PTR(long, lua_pcallk, _sig_lua_pcallk, long L, int nargs, int nresults, int errfunc, long ctx, long k)
+
+    /* 0x140E6D890 */
+    private static long _sig_lua_pushlstring = ScanSignature("\x48\x89\x5C\x24\x08\x57\x48\x83\xEC\x20\x48\x8B\xD9\x4D", "xxxxxxxxxxxxxx");
+    CREATE_FUNCTION_PTR(long, lua_pushlstring, _sig_lua_pushlstring, long L, long s, long len)
+
+    /* 0x140E6D870 */
+    private static long _sig_lua_pushinteger = ScanSignature("\x48\x8B\x41\x10\x48\x89\x10\xC6\x40\x08\x03", "xxxxxxxxxxx");
+    CREATE_FUNCTION_PTR(long, lua_pushinteger, _sig_lua_pushinteger, long L, int n)
+
+    /* 0x153927520 */
+    private static long _sig_lua_pushnumber = ScanSignature("\x48\x8B\x41\x10\xC5\xFA", "xxxxxx");
+    CREATE_FUNCTION_PTR(long, lua_pushnumber, _sig_lua_pushnumber, long L, float n)
+
+    /* 0x140E6DAD0 */
+    private static long _sig_lua_pushboolean = ScanSignature("\x48\x8B\x41\x10\x85", "xxxxx");
+    CREATE_FUNCTION_PTR(long, lua_pushboolean, _sig_lua_pushboolean, long L, int b)
+
+    /* 0x153912110 */
+    private static long _sig_lua_type = ScanSignature("\x48\x83\xEC\x28\xE8\xCC\xCC\xCC\xCC\x0F\xB6\x50\x08\xF6", "xxxxx????xxxxx");
+    CREATE_FUNCTION_PTR(long, lua_type, _sig_lua_type, long L, int idx)
+
+    /* 0x15391B810 */
+    private static long _sig_lua_tolstring = ScanSignature("\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x4C\x89\xC3\x89", "xxxxxxxxxxxxxxxxxxx");
+    CREATE_FUNCTION_PTR(long, lua_tolstring, _sig_lua_tolstring, long L, int idx, long len)
+
+    /* 0x140E6D3D0 */
+    private static long _sig_lua_tointegerx = ScanSignature("\x40\x53\x48\x83\xEC\x20\x49\x8B\xD8\x48\xC7", "xxxxxxxxxxx");
+    CREATE_FUNCTION_PTR(long, lua_tointegerx, _sig_lua_tointegerx, long L, int idx, long pisnum)
+
+    /* 0x140E6D230 */
+    private static long _sig_lua_tonumberx = ScanSignature("\x48\x83\xEC\x28\xE8\xCC\xCC\xCC\xCC\x80\x78\x08\x13", "xxxxx????xxxx");
+    CREATE_FUNCTION_PTR(long, lua_tonumberx, _sig_lua_tonumberx, long L, int idx, long pisnum)
+
+    /* 0x153916890 */
+    private static long _sig_lua_toboolean = ScanSignature("\x48\x83\xEC\x28\xE8\xCC\xCC\xCC\xCC\x0F\xB6\x48\x08\x80\xF9\x01", "xxxxx????xxxxxxx");
+    CREATE_FUNCTION_PTR(bool, lua_toboolean, _sig_lua_toboolean, long L, int idx)
+
+    /* 0x14BDE5E20 */
+    private static long _sigInitScriptSequenceManager = ScanSignature("\x48\x89\x5C\x24\x10\x48\x89\x6C\x24\x18\x56\x57\x41\x54\x41\x56\x41\x57\x48\x81\xEC\x30\x01\x00\x00\x48\x89", "xxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    CREATE_FUNCTION_PTR(int*, InitScriptSequenceManager, _sigInitScriptSequenceManager, long pScriptSequenceManager, uint* pStringHash, char a3)
+    
+    /* 0x14BDD7B60 */
+    private static long _sigRegisterScriptSequenceManager = ScanSignature("\x40\x56\x48\x81\xEC\xC0\x00\x00\x00\x48\x89\xCE\x45", "xxxxxxxxxxxxx");
+    CREATE_FUNCTION_PTR(long, RegisterScriptSequenceManager, _sigRegisterScriptSequenceManager, long pScriptSequenceManager)
+
+    public void Init()
+    {
+        if (_lastGameModeName != GameMode.GetName())
+        {
+            InitScriptSequence();
+
+            _lastGameModeName = GameMode.GetName();
+        }
+
+        if (_isInitialised)
+            return;
+
+        GameMode.Init();
+
+        fixed (bool* p_isScriptSequenceInactive = &_isScriptSequenceInactive)
+        fixed (long* p_pLuaState = &_pLuaState)
+        {
+            WriteAsmHook
+            (
+                $@"
+                    push rbp
+                    sub  rsp, 0x50
+                    mov  r9b, byte ptr [r8 + 0x20]
+                    mov  rbp, {(long)p_isScriptSequenceInactive}
+                    mov  byte ptr [rbp], r9b
+                    cmp  r9b, 0
+                    jz   getLuaState
+                    mov  rbp, {(long)p_pLuaState}
+                    mov  qword ptr [rbp], 0
+                    jmp  exit
+                getLuaState:
+                    mov  r9, qword ptr [rcx + 0x10]
+                    cmp  r9, 0
+                    jz   exit
+                    mov  r9, qword ptr [r9]
+                    cmp  r9, 0
+                    jz   exit
+                    mov  r9, qword ptr [r9 + 0x48]
+                    cmp  r9, 0
+                    jz   exit
+                    mov  r9, qword ptr [r9 + 0x18]
+                    cmp  r9, 0
+                    jz   exit
+                    mov  rbp, {(long)p_pLuaState}
+                    mov  qword ptr [rbp], r9
+                exit:
+                    cmp  byte ptr [r8 + 0x20], 0
+                    mov  r9, r8
+                    mov  rbp, rcx
+                ",
+
+                /* 0x1409172E7 */
+                ScanSignature
+                (
+                    "\x55\x48\x83\xEC\x50\x41\x80\x78\x20\x00",
+                    "xxxxxxxxxx"
+                ),
+
+                HookBehavior.Replace
+            );
+        }
+
+        _isInitialised = true;
+    }
+
+    public void InitScriptSequence()
+    {
+        if (_deniedGameModes.Contains(GameMode.GetName()) ||
+            GameMode.GetTutorialDestination() == GameMode.DestinationMode.GameModeStage)
+        {
+            return;
+        }
+
+        if (_sigScriptSequenceManagerStaticClassCtor == 0)
+        {
+            /* 0x140053480 */
+            _sigScriptSequenceManagerStaticClassCtor = ScanSignature
+            (
+                "\x45\x33\xC9\x4C\x8D\x05\xCC\xCC\xCC\xCC\x48\x8D\x15\xCC\xCC\xCC\xCC\x48\x8D\x0D\xCC\xCC\xCC\xCC\xE9\x73\x3F",
+                "xxxxxx????xxx????xxx????xxx"
+            );
+
+            if (_sigScriptSequenceManagerStaticClassCtor == 0)
+            {
+                Console.WriteLine("[Lua] Failed to initialise script sequence!");
+                return;
+            }
+
+            /* 0x143C53810 */
+            GameService.AddUserService(Memory.ReadEffectiveAddress(_sigScriptSequenceManagerStaticClassCtor + 0x11));
+        }
+
+        long pGameDocument = GameDocument.Get();
+
+        if (pGameDocument == 0)
+            return;
+
+        long pScriptSequenceManager = GameDocument.GetService(pGameDocument, "ScriptSequenceManager");
+
+        if (pScriptSequenceManager == 0)
+            return;
+
+        // BuildLevel
+        uint hash = 0x59B595D6;
+
+        GET_FUNCTION_PTR(InitScriptSequenceManager)(pScriptSequenceManager, &hash, (char)0);
+        GET_FUNCTION_PTR(RegisterScriptSequenceManager)(pScriptSequenceManager);
+    }
+
+    public long GetState()
+    {
+        Init();
+
+        /*
+            This stupid null check validates the Lua state
+            by checking if lua_State.next is null. This won't
+            always mean the state is valid, of course, as any
+            bit of memory could have a null QWORD, but it works.
+
+            PUC-Rio should really add a signature to the lua_State
+            struct for external validation, because checking the
+            result of luaL_newstate is just not good enough.
+        */
+        if (_pLuaState != 0 && *(long*)_pLuaState != 0)
+            return 0;
+
+        if (_isScriptSequenceInactive)
+            return 0;
+
+        return _pLuaState;
+    }
+
+    public void Script(string code, bool isRunOnce = false)
+    {
+        Init();
+
+        if (GetState() == 0)
+            return;
+
+        if (isRunOnce)
+        {
+            uint codeHash = StringMapOperation.ComputeHash(code);
+
+            if (_luaScripts.Contains(codeHash))
+            {
+                return;
+            }
+            else
+            {
+                _luaScripts.Add(codeHash);
+            }
+        }
+            
+        long str = TO_STRING_PTR(code);
+        
+        GET_FUNCTION_PTR(luaL_loadbufferx)(GetState(), str, code.Length, str, 0);
+        GET_FUNCTION_PTR(lua_pcallk)(GetState(), 0, -1, 0, 0, 0);
+    }
+
+    public void LoadScript(string path, bool isRunOnce = false)
+    {
+        if (!File.Exists(path))
+            return;
+
+        string code = string.Empty;
+
+        try
+        {
+            code = File.ReadAllText(path);
+        }
+        catch (IOException ex)
+        {
+            Console.WriteLine($"[Lua] Error: \"{path}\" is being used by another process.");
+        }
+
+        if (string.IsNullOrEmpty(code))
+            return;
+
+        Script(code, isRunOnce);
+    }
+
+    private void Call(string funcName, int resultCount, params object[] args)
+    {
+        Init();
+
+        if (GetState() == 0)
+            return;
+
+        GET_FUNCTION_PTR(lua_getglobal)(GetState(), TO_STRING_PTR(funcName));
+
+        foreach (var arg in args)
+        {
+            var type = arg.GetType();
+
+            if (type == typeof(string))
+            {
+                string str = (string)arg;
+                GET_FUNCTION_PTR(lua_pushlstring)(GetState(), TO_STRING_PTR(str), str.Length);
+            }
+            else if (type == typeof(int))
+            {
+                GET_FUNCTION_PTR(lua_pushinteger)(GetState(), (int)arg);
+            }
+            else if (type == typeof(float) || type == typeof(double))
+            {
+                GET_FUNCTION_PTR(lua_pushnumber)(GetState(), (float)arg);
+            }
+            else if (type == typeof(bool))
+            {
+                GET_FUNCTION_PTR(lua_pushboolean)(GetState(), (bool)arg ? 1 : 0);
+            }
+            else
+            {
+                Console.WriteLine($"[Lua] Type {type} is not supported...");
+            }
+        }
+
+        GET_FUNCTION_PTR(lua_pcallk)(GetState(), args.Length, resultCount, 0, 0, 0);
+    }
+
+    public void Call(string funcName, params object[] args)
+    {
+        Call(funcName, 0, args);
+    }
+
+    public T Call<T>(string funcName, params object[] args)
+    {
+        Init();
+
+        if (GetState() == 0)
+            return default;
+
+        Call(funcName, 1, args);
+
+        var type = typeof(T);
+        var luaType = GET_FUNCTION_PTR(lua_type)(GetState(), -1);
+
+        if (type == typeof(string) && luaType == LUA_TSTRING)
+        {
+            long ptr = (long)GET_FUNCTION_PTR(lua_tolstring)(GetState(), -1, 0);
+            return (T)(object)FROM_STRING_PTR(ptr);
+        }
+        else if (type == typeof(int) && luaType == LUA_TNUMBER)
+        {
+            return (T)(object)(int)GET_FUNCTION_PTR(lua_tointegerx)(GetState(), -1, 0);
+        }
+        else if ((type == typeof(float) || type == typeof(double)) && luaType == LUA_TNUMBER)
+        {
+            return (T)(object)(float)GET_FUNCTION_PTR(lua_tonumberx)(GetState(), -1, 0);
+        }
+        else if (type == typeof(bool) && luaType == LUA_TBOOLEAN)
+        {
+            return (T)(object)(bool)GET_FUNCTION_PTR(lua_toboolean)(GetState(), -1);
+        }
+        else
+        {
+            Console.WriteLine($"[Lua] Type {type} is not supported...");
+        }
+
+        return default;
     }
 }
 
@@ -759,39 +1667,37 @@ Library "MathHelpers" by "Hyper"
 
     public T FloatPercentToRange<T>(float value)
     {
-        float range = value / 100.0f;
-
         if (typeof(T) == typeof(sbyte))
         {
-            return (T)(object)(byte)(range * (sbyte.MaxValue * 1.0f));
+            return (T)(object)(byte)(value * (sbyte.MaxValue * 1.0f));
         }
         else if (typeof(T) == typeof(byte))
         {
-            return (T)(object)(byte)(range * (byte.MaxValue * 1.0f));
+            return (T)(object)(byte)(value * (byte.MaxValue * 1.0f));
         }
         else if (typeof(T) == typeof(short))
         {
-            return (T)(object)(short)(range * (short.MaxValue * 1.0f));
+            return (T)(object)(short)(value * (short.MaxValue * 1.0f));
         }
         else if (typeof(T) == typeof(ushort))
         {
-            return (T)(object)(ushort)(range * (ushort.MaxValue * 1.0f));
+            return (T)(object)(ushort)(value * (ushort.MaxValue * 1.0f));
         }
         else if (typeof(T) == typeof(int))
         {
-            return (T)(object)(int)(range * (int.MaxValue * 1.0f));
+            return (T)(object)(int)(value * (int.MaxValue * 1.0f));
         }
         else if (typeof(T) == typeof(uint))
         {
-            return (T)(object)(uint)(range * (uint.MaxValue * 1.0f));
+            return (T)(object)(uint)(value * (uint.MaxValue * 1.0f));
         }
         else if (typeof(T) == typeof(long))
         {
-            return (T)(object)(long)(range * (long.MaxValue * 1.0f));
+            return (T)(object)(long)(value * (long.MaxValue * 1.0f));
         }
         else if (typeof(T) == typeof(ulong))
         {
-            return (T)(object)(ulong)(range * (ulong.MaxValue * 1.0f));
+            return (T)(object)(ulong)(value * (ulong.MaxValue * 1.0f));
         }
         
         return default;
@@ -864,6 +1770,14 @@ Library "Memory" by "Hyper"
             return 0;
 
         return addr + Read<int>(addr + 0x01) + 0x05;
+    }
+
+    public long ReadEffectiveAddress(long addr)
+    {
+        if (addr == 0)
+            return 0;
+
+        return addr + Read<int>(addr + 0x03) + 0x07;
     }
 
     public long ReadJump(long addr)
@@ -998,7 +1912,16 @@ Library "Reflection" by "Hyper"
     	if (!_rflPointers.ContainsKey(rflName))
     		return null;
 
-        var result = (T*)_rflPointers[rflName];
+        long ptr = _rflPointers[rflName];
+
+        if (ptr == 0)
+            return null;
+
+        // Check for BINA signature.
+        if (*(int*)(ptr - 0x40) != 0x414E4942)
+            return null;
+
+        var result = (T*)ptr;
 
     	if (result != null && !_rflBackups.ContainsKey(rflName))
             _rflBackups.Add(rflName, *result);
@@ -1041,31 +1964,23 @@ Library "ReflectionHelpers" by "Hyper"
     #define RFL_GET_CONTEXTUAL_PLAYER_PARAM(info, hierarchy) \
         (Sonic.IsSideView() \
             ? info.pData->cyberspaceSV.hierarchy \
-            : BlackboardStatus.Get() != 0 \
-                ? Bitwise.Test(*BlackboardStatus.GetWorldFlags(), (uint)BlackboardStatus.WorldFlags.IsCyberSpace) \
-                    ? info.pData->cyberspace.hierarchy \
-                    : info.pData->forwardView.hierarchy \
+            : BlackboardStatus.IsCyberSpace() \
+                ? info.pData->cyberspace.hierarchy \
                 : info.pData->forwardView.hierarchy)
 
     #define RFL_SET_CONTEXTUAL_PLAYER_PARAM(info, hierarchy, value) \
         if (Sonic.IsSideView()) \
             info.pData->cyberspaceSV.hierarchy = value; \
-        else if (BlackboardStatus.Get() != 0) \
-            if (Bitwise.Test(*BlackboardStatus.GetWorldFlags(), (uint)BlackboardStatus.WorldFlags.IsCyberSpace)) \
-                info.pData->cyberspace.hierarchy = value; \
-            else \
-                info.pData->forwardView.hierarchy = value; \
+        else if (BlackboardStatus.IsCyberSpace()) \
+            info.pData->cyberspace.hierarchy = value; \
         else \
             info.pData->forwardView.hierarchy = value;
 
     #define RFL_RESET_CONTEXTUAL_PLAYER_PARAM(info, type, hierarchy) \
         if (Sonic.IsSideView()) \
             info.pData->cyberspaceSV.hierarchy = Reflection.GetOriginalData<type>(info.Name).cyberspaceSV.hierarchy; \
-        else if (BlackboardStatus.Get() != 0) \
-            if (Bitwise.Test(*BlackboardStatus.GetWorldFlags(), (uint)BlackboardStatus.WorldFlags.IsCyberSpace)) \
-                info.pData->cyberspace.hierarchy = Reflection.GetOriginalData<type>(info.Name).cyberspace.hierarchy; \
-            else \
-                info.pData->forwardView.hierarchy = Reflection.GetOriginalData<type>(info.Name).forwardView.hierarchy; \
+        else if (BlackboardStatus.IsCyberSpace()) \
+            info.pData->cyberspace.hierarchy = Reflection.GetOriginalData<type>(info.Name).cyberspace.hierarchy; \
         else \
             info.pData->forwardView.hierarchy = Reflection.GetOriginalData<type>(info.Name).forwardView.hierarchy;
 }
@@ -1096,7 +2011,7 @@ Library "Resources" by "Hyper"
         _currentResourceType = Marshal.PtrToStringAnsi((IntPtr)pResourceTypeName);
     
     	foreach (TResourceNotifyAction action in _resourceNotifyActions)
-    		pResourceName = (long)Marshal.StringToHGlobalAnsi(action.Invoke(_currentResourceName, _currentResourceType));
+    		pResourceName = (long)Marshal.StringToHGlobalAnsi(action(_currentResourceName, _currentResourceType));
     	
         return pResourceName;
     }
@@ -1104,7 +2019,7 @@ Library "Resources" by "Hyper"
     UNMANAGED_FUNCTION(long, GetResourceData, long pResourceData)
     {
     	foreach (TResourceDataAction action in _resourceDataActions)
-    		pResourceData = action.Invoke(_currentResourceName, _currentResourceType, pResourceData);
+    		pResourceData = action(_currentResourceName, _currentResourceType, pResourceData);
     
         return pResourceData;
     }
@@ -1395,7 +2310,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (gocPlayerVisual == 0)
                 return;
 
-            fpSetAnimation.Invoke(gocPlayerVisual, (long)Marshal.StringToHGlobalAnsi(destination), 0xFE);
+            fpSetAnimation(gocPlayerVisual, (long)Marshal.StringToHGlobalAnsi(destination), 0xFE);
         }
 
         public static void SetAnimationParameter(string paramName, float value)
@@ -1428,7 +2343,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (gocPlayerVisual == 0)
                 return;
 
-            fpSetAnimationParameter.Invoke(gocPlayerVisual, (long)Marshal.StringToHGlobalAnsi(paramName), value);
+            fpSetAnimationParameter(gocPlayerVisual, (long)Marshal.StringToHGlobalAnsi(paramName), value);
         }
     }
 
@@ -1478,7 +2393,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (sonicContext == 0)
                 return 0;
 
-            return fpGetStatePluginCollision.Invoke(sonicContext);
+            return fpGetStatePluginCollision(sonicContext);
         }
 
         public static long SetCollisionSphere(CollisionType type, float radius)
@@ -1506,7 +2421,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (statePluginCollision == 0)
                 return 0;
 
-            return fpSetCollisionSphere.Invoke(statePluginCollision, type, radius);
+            return fpSetCollisionSphere(statePluginCollision, type, radius);
         }
 
         public static void ToggleEntityCollision(bool enabled)
@@ -1534,7 +2449,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (sonicContext == 0)
                 return;
             
-            fpToggleEntityCollision.Invoke(sonicContext, enabled);
+            fpToggleEntityCollision(sonicContext, enabled);
         }
     }
 
@@ -1581,7 +2496,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (pStatePluginEffect == 0)
                 return;
 
-            fpPlayEffect.Invoke(pStatePluginEffect, StringMapOperation.ComputeHash(handleName), (long)Marshal.StringToHGlobalAnsi(effectName));
+            fpPlayEffect(pStatePluginEffect, StringMapOperation.ComputeHash(handleName), (long)Marshal.StringToHGlobalAnsi(effectName));
         }
 
         public static void StopEffect(string handleName)
@@ -1609,7 +2524,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (pStatePluginEffect == 0)
                 return;
 
-            fpPlayEffect.Invoke(pStatePluginEffect, StringMapOperation.ComputeHash(handleName));
+            fpPlayEffect(pStatePluginEffect, StringMapOperation.ComputeHash(handleName));
         }
 
         public static void PlayAnimationEffect(string name)
@@ -1637,7 +2552,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (sonicContext == 0)
                 return;
 
-            fpPlayAnimationEffect.Invoke(sonicContext, (long)Marshal.StringToHGlobalAnsi(name));
+            fpPlayAnimationEffect(sonicContext, (long)Marshal.StringToHGlobalAnsi(name));
         }
 
         public static void StopAnimationEffects()
@@ -1665,7 +2580,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (sonicContext == 0)
                 return;
 
-            fpStopAnimationEffect.Invoke(sonicContext);
+            fpStopAnimationEffect(sonicContext);
         }
     }
 
@@ -1745,7 +2660,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
                     break;
             }
 
-            return Marshal.GetDelegateForFunctionPointer<_tCommonInputDel>(functionPtr).Invoke(sonicContext, actionType);
+            return Marshal.GetDelegateForFunctionPointer<_tCommonInputDel>(functionPtr)(sonicContext, actionType);
         }
 
         public static bool IsPressed(PlayerActionType actionType)
@@ -1904,7 +2819,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
 
             int zero = 0;
             
-            return *fpPlaySound.Invoke(pGOCSound, &zero, (long)Marshal.StringToHGlobalAnsi(soundName), 0.0f);
+            return *fpPlaySound(pGOCSound, &zero, (long)Marshal.StringToHGlobalAnsi(soundName), 0.0f);
         }
 
         public static void StopSound(int* pSoundHandle)
@@ -1929,7 +2844,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (fpStopSound == null)
                 return;
 
-            fpStopSound.Invoke(pSoundHandle);
+            fpStopSound(pSoundHandle);
         }
     }
 
@@ -2150,6 +3065,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
     public static class State
     {
         private static bool _initialisedStateRedirector = false;
+        private static List<StateID> _discardedStates = new();
         private static Dictionary<StateID, StateID> _redirectedStates = new();
         private static StateID _currentStateID = Sonic.StateID.Default;
         private static Collections.StackList<StateID> _stateStackTrace = new(10);
@@ -2180,7 +3096,10 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             }
 
             foreach (TStateNotifyAction action in _stateNotifyActions)
-                action.Invoke(_currentStateID, _stateStackTrace.ToArray());
+                action(_currentStateID, _stateStackTrace.ToArray());
+
+            if (_discardedStates.Contains((StateID)stateId))
+                return -2;
 
             if (_redirectedStates.ContainsKey((StateID)stateId))
                 return (int)_redirectedStates[(StateID)stateId];
@@ -2201,6 +3120,14 @@ Library "Sonic" by "Hyper, NM & Ahremic"
                     mov   rax, {(long)_fpSetStateID}
                     call  rax
                     mov   edx, eax
+                    cmp   edx, -2
+                    jne   exit
+                    mov   r15, qword ptr [rsp + 0x38 + 0xFFFFFFFFFFFFFFE8]
+                    add   rsp, 0x28
+                    pop   rbp
+                    pop   rbx
+                    ret
+                exit:
                     movzx eax, byte ptr [rbx + 0x11C]
                 ",
 
@@ -2256,7 +3183,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (pSonicContext == 0)
                 return 0;
 
-            return fpGetStatePlugin.Invoke(*(long*)(*(long*)(pSonicContext + 0x38) + 0x108), StringMapOperation.ComputeHash(pluginName));
+            return fpGetStatePlugin(*(long*)(*(long*)(pSonicContext + 0x38) + 0x108), StringMapOperation.ComputeHash(pluginName));
         }
 
         public static void AddStateNotifyAction(TStateNotifyAction action)
@@ -2292,11 +3219,25 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             _redirectedStates.Add(source, destination);
         }
 
+        public static void Discard(StateID source)
+        {
+            InitStateRedirector();
+
+            if (_discardedStates.Contains(source))
+                return;
+
+            _discardedStates.Add(source);
+        }
+
         public static void Restore(StateID source)
         {
             InitStateRedirector();
+
+            if (_discardedStates.Contains(source))
+                _discardedStates.Remove(source);
             
-            _redirectedStates.Remove(source);
+            if (_redirectedStates.ContainsKey(source))
+                _redirectedStates.Remove(source);
         }
 
         public static void SetState(StateID destination)
@@ -2324,7 +3265,7 @@ Library "Sonic" by "Hyper, NM & Ahremic"
             if (sonicContext == 0)
                 return;
 
-            fpSetState.Invoke(Read<long>(sonicContext + 0x38), (int)destination, 0);
+            fpSetState(Read<long>(sonicContext + 0x38), (int)destination, 0);
         }
     }
 }
@@ -2418,6 +3359,8 @@ Library "VectorHelpers" by "Hyper"
 
 Library "XInput" by "Hyper"
 {
+    #lib "MathHelpers"
+
     #load "System.Numerics.dll"
 
     using System.Numerics;
@@ -2464,7 +3407,7 @@ Library "XInput" by "Hyper"
     [StructLayout(LayoutKind.Sequential)]
     public struct Gamepad
     {
-        public Buttons wButtons; // Use Sonic.Input for keyboard parity!
+        public Buttons wButtons;
         public byte bLeftTrigger;
         public byte bRightTrigger;
         public short sThumbLX;
@@ -2553,6 +3496,17 @@ Library "XInput" by "Hyper"
         }
 
         return v;
+    }
+
+    // Use Sonic.Input for keyboard parity!
+    public bool IsButtonDown(Buttons buttons)
+    {
+        var pState = GetState();
+
+        if (pState == null)
+            return false;
+
+        return (pState.Value.Gamepad.wButtons & buttons) != 0;
     }
 
     public float GetTrigger(int triggerIndex)
@@ -6638,210 +7592,6 @@ Patch "Disable Water Audio Filter" in "Audio" by "Hyper"
     );
 }
 
-Code "Homing Attack Trick Animations" in "Animation" by "Hyper & Ahremic" does "Replaces the homing attack finish animation with randomised trick animations."
-//
-    #lib "Memory"
-
-    using System.Runtime.InteropServices;
-
-    static bool Initialised = false;
-
-    static Random Random = new Random();
-
-    static string[] AnimVariations = new[] { "U", "D", "L", "R" };
-
-    static float AnimSpeed = 0.5f;
-
-    static IntPtr pAnimName = Marshal.AllocHGlobal(14);
-//
-{
-    string randAnimName = $"JUMP_TRICK_{AnimVariations[Random.Next(0, 4)]}{Random.Next(0, 3)}\0";
-
-    Marshal.Copy(System.Text.Encoding.UTF8.GetBytes(randAnimName), 0, pAnimName, randAnimName.Length);
-
-    if (!Initialised)
-    {
-        /* 0x140823825 */
-        long playAnimCallerAddr = ScanSignature
-        (
-            "\xE8\xCC\xCC\xCC\xCC\x33\xD2\x49\x8B\xCE\xE8\xCC\xCC\xCC\xCC\x41\xB8\x74\x00\x00\x00",
-            "x????xxxxxx????xxxxxx"
-        );
-
-        /* 0x14086F023 */
-        long setAnimSpeedCallerAddr = ScanSignature
-        (
-            "\xE8\xCC\xCC\xCC\xCC\x48\x8D\x05\xCC\xCC\xCC\xCC\xB9\x03\x00\x00\x00",
-            "x????xxx????xxxxx"
-        );
-
-        /* 0x1407C9300 */
-        long playAnimFuncAddr = Memory.ReadCall(playAnimCallerAddr);
-
-        /* 0x1407C9DB0 */
-        long setAnimSpeedFuncAddr = Memory.ReadCall(setAnimSpeedCallerAddr);
-
-        fixed (float* pAnimSpeed = &AnimSpeed)
-        {
-            WriteAsmHook
-            (
-                $@"
-                    push  rax
-                    mov   rax, {(long)pAnimSpeed}
-                    movss xmm2, dword ptr [rax]
-                    pop   rax
-                    mov   rdx, {(long)Marshal.StringToHGlobalAnsi("SPEED_RATIO")}
-                    lea   rdx, [rdx]
-                    mov   rcx, rax
-                    mov   rax, {setAnimSpeedFuncAddr}
-                    mov   rbx, rcx
-                    call  rax
-                    mov   rdx, {pAnimName}
-                    lea   rdx, [rdx]
-                    mov   rcx, rbx
-                    mov   rax, {playAnimFuncAddr}
-                    call  rax
-                ",
-
-                /* 0x14082381B */
-                playAnimCallerAddr - 0x0A,
-
-                HookBehavior.Replace
-            );
-        }
-
-        Initialised = true;
-    }
-}
-
-Code "Fix Air Boost Reset" in "Fixes" by "Hyper" does "Allows Sonic to perform another Air Boost after previously using it before performing a homing attack, stomp, or using a spring."
-//
-    #lib "Bitwise"
-    #lib "BlackboardStatus"
-    #lib "Sonic"
-
-    static Sonic.StateID[] AirBoostStates =
-    {
-        Sonic.StateID.StateStompingFlip,
-        Sonic.StateID.StateStompingBounce,
-        Sonic.StateID.StateHomingFinished,
-        Sonic.StateID.StateSpringJump
-    }
-
-    static bool IsRestoredAirBoost = false;
-//
-{
-    void NotifyAirBoostReset(Sonic.StateID stateId, Sonic.StateID[] stateStackTrace)
-    {
-        // Reset flag for StateAirBoost or StateSpinBoost.
-        if (stateId == Sonic.StateID.StateAirBoost || stateId == Sonic.StateID.StateSpinBoost)
-        {
-            IsRestoredAirBoost = false;
-            return;
-        }
-
-        foreach (var restoreState in AirBoostStates)
-        {
-            if (restoreState == stateId)
-                IsRestoredAirBoost = true;
-        }
-    }
-
-    Sonic.State.AddStateNotifyAction(NotifyAirBoostReset);
-
-    if (BlackboardStatus.Get() != 0)
-    {
-        // Disable restored air boost for Super Sonic.
-        if (BlackboardStatus.IsSuper())
-            IsRestoredAirBoost = false;
-
-        // Disable restored air boost for diving.
-        if (Bitwise.Test(*BlackboardStatus.GetStateFlags(), (uint)BlackboardStatus.StateFlags.IsDiving))
-            IsRestoredAirBoost = false;
-    }
-
-    if (Sonic.Input.IsPressed(Sonic.PlayerActionType.PlayerBoost) && !Sonic.IsGroundedSpecial() && IsRestoredAirBoost)
-    {
-        // Exit into StateAirBoost.
-        Sonic.State.SetState(Sonic.StateID.StateAirBoost);
-    }
-}
-
-Patch "Fix Damage from Jumping into Enemies" in "Fixes" by "Hyper" does "Fixes Sonic taking damage when jumping into enemies within a small frame window."
-//
-    #lib "Sonic"
-
-    static bool IsJumpPrevious = false;
-//
-{
-    void NotifyJumpDamageCollision(Sonic.StateID stateId, Sonic.StateID[] stateStackTrace)
-    {
-        bool isJump = stateId == Sonic.StateID.StateJump ||
-            stateId == Sonic.StateID.StateDoubleJump ||
-            stateId == Sonic.StateID.StateGrindDoubleJump;
-
-        if (isJump)
-        {
-            Sonic.Collision.SetCollisionSphere(Sonic.CollisionType.Damage, 1.0f);
-            Sonic.Collision.ToggleEntityCollision(false);
-            IsJumpPrevious = true;
-        }
-        else if (IsJumpPrevious)
-        {
-            Sonic.Collision.SetCollisionSphere(Sonic.CollisionType.Default, 1.0f);
-            Sonic.Collision.ToggleEntityCollision(true);
-            IsJumpPrevious = false;
-        }
-    }
-
-    Sonic.State.AddStateNotifyAction(NotifyJumpDamageCollision);
-}
-
-Patch "Fix Quick Cyloop Lock-On" in "Fixes" by "WasifBoomz & The Duck Dealer" does "Fixes the lock-on target changing whenever Sonic performs a Quick Cyloop, allowing for consistent attacks during combat."
-{
-    WriteProtected<byte>
-    (
-        /* 0x14088D334 */
-        ScanSignature
-        (
-            "\x76\x12\x8B\x46\x28\x48\x8D\x55\x97\x48\x8B\xCB\x89\x45\x97\xE8\xCC\xCC\xCC\xCC\x48\x8B\x47\x38",
-            "xxxxxxxxxxxxxxxx????xxxx"
-        ),
-
-        0xEB
-    );
-}
-
-Patch "Fix Rail Switching Animation" in "Fixes" by "WasifBoomz & Sails" does "Stops the rail switching animation from ending abruptly."
-{
-    WriteAsmHook
-    (
-        $@"
-            ; Check if (unknown float) is equal to 40
-            cmp   dword ptr [r15+14h], 0x42200000
-            jz    setSpeed
-            jmp   originalCode
-			
-        setSpeed:
-            mov   dword ptr [r15+18h], 0x3F266666
-			
-        originalCode:
-            movss xmm1, dword ptr [r15+18h]
-            subss xmm0, dword ptr [rbx+r12*8]
-            andps xmm1, xmm9
-        ",
-			
-        /* 0x140DA61A5 */
-        ScanSignature
-        (
-            "\xF3\x41\x0F\x10\x4F\x18\xF3\x42\x0F\x5C\x04\xE3",
-            "xxxxxxxxxxxx"
-        ),
-			
-        HookBehavior.Replace
-    );
-}
-
 Patch "Disable Tutorial Messages" in "Gameplay" by "Hyper" does "Disables all intrusive tutorial messages that appear under certain conditions for the first time."
 {
     // Hide hint rings.
@@ -6994,6 +7744,134 @@ Patch "Drop Dash on Double Jump" in "Gameplay" by "Hyper" does "Allows you to dr
 
     WriteNop(sig, 2);
     WriteProtected<byte>(sig + 0x0F, 0xEB);
+}
+
+Code "Fix Air Boost Reset" in "Fixes" by "Hyper" does "Allows Sonic to perform another Air Boost after previously using it before performing a homing attack, stomp, or using a spring."
+//
+    #lib "Bitwise"
+    #lib "BlackboardStatus"
+    #lib "Sonic"
+
+    static Sonic.StateID[] AirBoostStates =
+    {
+        Sonic.StateID.StateStompingFlip,
+        Sonic.StateID.StateStompingBounce,
+        Sonic.StateID.StateHomingFinished,
+        Sonic.StateID.StateSpringJump
+    }
+
+    static bool IsRestoredAirBoost = false;
+//
+{
+    void NotifyAirBoostReset(Sonic.StateID stateId, Sonic.StateID[] stateStackTrace)
+    {
+        // Reset flag for StateAirBoost or StateSpinBoost.
+        if (stateId == Sonic.StateID.StateAirBoost || stateId == Sonic.StateID.StateSpinBoost)
+        {
+            IsRestoredAirBoost = false;
+            return;
+        }
+
+        foreach (var restoreState in AirBoostStates)
+        {
+            if (restoreState == stateId)
+                IsRestoredAirBoost = true;
+        }
+    }
+
+    Sonic.State.AddStateNotifyAction(NotifyAirBoostReset);
+
+    if (BlackboardStatus.Get() != 0)
+    {
+        // Disable restored air boost for Super Sonic.
+        if (BlackboardStatus.IsSuper())
+            IsRestoredAirBoost = false;
+
+        // Disable restored air boost for diving.
+        if (Bitwise.Test(*BlackboardStatus.GetStateFlags(), (uint)BlackboardStatus.StateFlags.IsDiving))
+            IsRestoredAirBoost = false;
+    }
+
+    if (Sonic.Input.IsPressed(Sonic.PlayerActionType.PlayerBoost) && !Sonic.IsGroundedSpecial() && IsRestoredAirBoost)
+    {
+        // Exit into StateAirBoost.
+        Sonic.State.SetState(Sonic.StateID.StateAirBoost);
+    }
+}
+
+Patch "Fix Damage from Jumping into Enemies" in "Fixes" by "Hyper" does "Fixes Sonic taking damage when jumping into enemies within a small frame window."
+//
+    #lib "Sonic"
+
+    static bool IsJumpPrevious = false;
+//
+{
+    void NotifyJumpDamageCollision(Sonic.StateID stateId, Sonic.StateID[] stateStackTrace)
+    {
+        bool isJump = stateId == Sonic.StateID.StateJump ||
+            stateId == Sonic.StateID.StateDoubleJump ||
+            stateId == Sonic.StateID.StateGrindDoubleJump;
+
+        if (isJump)
+        {
+            Sonic.Collision.SetCollisionSphere(Sonic.CollisionType.Damage, 1.0f);
+            Sonic.Collision.ToggleEntityCollision(false);
+            IsJumpPrevious = true;
+        }
+        else if (IsJumpPrevious)
+        {
+            Sonic.Collision.SetCollisionSphere(Sonic.CollisionType.Default, 1.0f);
+            Sonic.Collision.ToggleEntityCollision(true);
+            IsJumpPrevious = false;
+        }
+    }
+
+    Sonic.State.AddStateNotifyAction(NotifyJumpDamageCollision);
+}
+
+Patch "Fix Quick Cyloop Lock-On" in "Fixes" by "WasifBoomz & The Duck Dealer" does "Fixes the lock-on target changing whenever Sonic performs a Quick Cyloop, allowing for consistent attacks during combat."
+{
+    WriteProtected<byte>
+    (
+        /* 0x14088D334 */
+        ScanSignature
+        (
+            "\x76\x12\x8B\x46\x28\x48\x8D\x55\x97\x48\x8B\xCB\x89\x45\x97\xE8\xCC\xCC\xCC\xCC\x48\x8B\x47\x38",
+            "xxxxxxxxxxxxxxxx????xxxx"
+        ),
+
+        0xEB
+    );
+}
+
+Patch "Fix Rail Switching Animation" in "Fixes" by "WasifBoomz & Sails" does "Stops the rail switching animation from ending abruptly."
+{
+    WriteAsmHook
+    (
+        $@"
+            ; Check if (unknown float) is equal to 40
+            cmp   dword ptr [r15+14h], 0x42200000
+            jz    setSpeed
+            jmp   originalCode
+			
+        setSpeed:
+            mov   dword ptr [r15+18h], 0x3F266666
+			
+        originalCode:
+            movss xmm1, dword ptr [r15+18h]
+            subss xmm0, dword ptr [rbx+r12*8]
+            andps xmm1, xmm9
+        ",
+			
+        /* 0x140DA61A5 */
+        ScanSignature
+        (
+            "\xF3\x41\x0F\x10\x4F\x18\xF3\x42\x0F\x5C\x04\xE3",
+            "xxxxxxxxxxxx"
+        ),
+			
+        HookBehavior.Replace
+    );
 }
 
 Patch "Fix Empty Messages" in "Fixes" by "Hyper" does "Removes the empty messages that occur when the game is in an unsafe state."
@@ -7365,8 +8243,6 @@ Patch "Force 4K Video Playback" in "Graphics" by "Hyper" does "Forces the game t
     );
 }
 
-
-
 Code "Force Cyber Space Objects on Islands" in "Graphics" by "Hyper" does
 /*
 Replaces all supported objects on the islands with their Cyber Space counterparts.
@@ -7473,7 +8349,7 @@ Unsupported objects;
         return resourceName;
     }
 
-    if (GameMode.GetName() == "GameModeStage")
+    if (GameMode.GetName() == "GameModeStage" || GameMode.GetTutorialDestination() == GameMode.DestinationMode.GameModeStage)
     {
         Resources.AddResourceNotifyAction(NotifyRedirectIslandObjects);
     }
@@ -7677,7 +8553,7 @@ Unsupported objects;
         return resourceName;
     }
 
-    if (GameMode.GetName() == "GameModeCyberStage")
+    if (GameMode.GetName() == "GameModeCyberStage" || GameMode.GetTutorialDestination() == GameMode.DestinationMode.GameModeCyberStage)
     {
         Resources.AddResourceNotifyAction(NotifyRedirectCyberSpaceObjects);
     }
@@ -8316,6 +9192,82 @@ Patch "Hide Titan Health Gauge" in "UI" by "Hyper"
     );
 }
 
+Code "Homing Attack Trick Animations" in "Animation" by "Hyper & Ahremic" does "Replaces the homing attack finish animation with randomised trick animations."
+//
+    #lib "Memory"
+
+    using System.Runtime.InteropServices;
+
+    static bool Initialised = false;
+
+    static Random Random = new Random();
+
+    static string[] AnimVariations = new[] { "U", "D", "L", "R" };
+
+    static float AnimSpeed = 0.5f;
+
+    static IntPtr pAnimName = Marshal.AllocHGlobal(14);
+//
+{
+    string randAnimName = $"JUMP_TRICK_{AnimVariations[Random.Next(0, 4)]}{Random.Next(0, 3)}\0";
+
+    Marshal.Copy(System.Text.Encoding.UTF8.GetBytes(randAnimName), 0, pAnimName, randAnimName.Length);
+
+    if (!Initialised)
+    {
+        /* 0x140823825 */
+        long playAnimCallerAddr = ScanSignature
+        (
+            "\xE8\xCC\xCC\xCC\xCC\x33\xD2\x49\x8B\xCE\xE8\xCC\xCC\xCC\xCC\x41\xB8\x74\x00\x00\x00",
+            "x????xxxxxx????xxxxxx"
+        );
+
+        /* 0x14086F023 */
+        long setAnimSpeedCallerAddr = ScanSignature
+        (
+            "\xE8\xCC\xCC\xCC\xCC\x48\x8D\x05\xCC\xCC\xCC\xCC\xB9\x03\x00\x00\x00",
+            "x????xxx????xxxxx"
+        );
+
+        /* 0x1407C9300 */
+        long playAnimFuncAddr = Memory.ReadCall(playAnimCallerAddr);
+
+        /* 0x1407C9DB0 */
+        long setAnimSpeedFuncAddr = Memory.ReadCall(setAnimSpeedCallerAddr);
+
+        fixed (float* pAnimSpeed = &AnimSpeed)
+        {
+            WriteAsmHook
+            (
+                $@"
+                    push  rax
+                    mov   rax, {(long)pAnimSpeed}
+                    movss xmm2, dword ptr [rax]
+                    pop   rax
+                    mov   rdx, {(long)Marshal.StringToHGlobalAnsi("SPEED_RATIO")}
+                    lea   rdx, [rdx]
+                    mov   rcx, rax
+                    mov   rax, {setAnimSpeedFuncAddr}
+                    mov   rbx, rcx
+                    call  rax
+                    mov   rdx, {pAnimName}
+                    lea   rdx, [rdx]
+                    mov   rcx, rbx
+                    mov   rax, {playAnimFuncAddr}
+                    call  rax
+                ",
+
+                /* 0x14082381B */
+                playAnimCallerAddr - 0x0A,
+
+                HookBehavior.Replace
+            );
+        }
+
+        Initialised = true;
+    }
+}
+
 Patch "Infinite Boost Gauge" in "Cheats" by "Hyper"
 {
     WriteNop
@@ -8455,9 +9407,9 @@ Notes;
     using System;
     using System.Numerics;
 
-    const float grindCrouchSpeed = 36.0f;
-    const float boostGrindSpeedMin = 6.0f;
-    const float boostGrindSpeed = 50.0f;
+    const float grindCrouchSpeed = 40.0f;
+    const float boostGrindSpeedMin = 3.0f;
+    const float boostGrindSpeed = 45.0f;
     static bool isInitialised = false;
     static bool isRailCrouching = false;
     static float* playerParamGrind = null;
@@ -8692,7 +9644,7 @@ This replaces the basic X button QTE to dodge the rifle projectile in the final 
     );
 }
 
-Code "Retain Ground Velocity for Jump" in "Physics" by "Hyper" does
+Patch "Retain Ground Velocity for Jump" in "Physics" by "Hyper" does
 /*
 Retains Sonic's ground velocity when jumping.
 
@@ -9355,6 +10307,66 @@ Patch "Tighter Jump Rotation" in "Physics" by "Hyper" does "Allows for tighter m
 }
 
 /*---------------------------------------- LARGE LIBRARIES ----------------------------------------*/
+
+Library "CustomMusicParameter"
+{
+    #load "System.Numerics.dll"
+
+    using System.Numerics;
+    using System.Runtime.InteropServices;
+
+    [StructLayout(LayoutKind.Explicit, Size = 8)]
+    public struct CustomMusicTransitInfo
+    {
+        [FieldOffset(0)] public float fadeOutTime;
+        [FieldOffset(4)] public float delayTime;
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 16)]
+    public struct CString
+    {
+        [FieldOffset(0)] public long pValue;
+
+        public string Value
+        {
+        	get => Marshal.PtrToStringAnsi((IntPtr)pValue);
+        	set => pValue = (long)Marshal.StringToHGlobalAnsi(value);
+        }
+    }
+
+    public enum MusicType : sbyte
+    {
+        THEME_SONG = 0,
+        OTHER = 1
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 24)]
+    public struct CustomMusicInfo
+    {
+        [FieldOffset(0)]  public CString cueName;
+        [FieldOffset(16)] public float fadeOutTiming;
+        [FieldOffset(20)] public bool _lock;
+        [FieldOffset(21)] public MusicType musicType;
+    }
+
+    [StructLayout(LayoutKind.Explicit, Size = 3088)]
+    public struct Root
+    {
+        [FieldOffset(0)]    public CustomMusicTransitInfo transitInfo;
+        [FieldOffset(8)]    public unsafe fixed byte /* CustomMusicInfo[128] */ _musicInfos[3072];
+
+        public unsafe CustomMusicInfo* musicInfos
+        {
+            get
+            {
+                fixed (byte* p_musicInfos = _musicInfos)
+                    return (CustomMusicInfo*)p_musicInfos;
+            }
+        }
+
+        [FieldOffset(3080)] public float idlingViewTime;
+    }
+}
 
 Library "SonicParameters"
 {

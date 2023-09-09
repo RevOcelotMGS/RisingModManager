@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using HedgeModManager.CodeCompiler;
+using HedgeModManager.Foundation;
 using HedgeModManager.Misc;
 using HedgeModManager.Serialization;
 using HedgeModManager.UI;
@@ -158,6 +159,11 @@ namespace HedgeModManager
                     if (File.Exists(codesPath))
                     {
                         Codes = CodeCompiler.CodeFile.FromFile(codesPath);
+                        foreach (var code in Codes.Codes)
+                        {
+                            if (code.IsExecutable())
+                                code.Name = $"{Title}\\{code.Name}";
+                        }
                     }
                 }
 

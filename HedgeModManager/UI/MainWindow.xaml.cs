@@ -87,10 +87,31 @@ namespace HedgeModManager
                 Tasks.Remove(task);
         }
 
-        public Task WaitTasks()
+        public Task WaitTasks(int? currentTask = null)
         {
-            lock (Tasks)
-                return Task.WhenAll(Tasks);
+            if (currentTask == null)
+            {
+                lock (Tasks)
+                {
+                    return Task.WhenAll(Tasks);
+                }
+            }
+            else
+            {
+                lock (Tasks)
+                {
+                    var tasks = new List<Task>(Tasks.Count);
+                    foreach (var task in Tasks)
+                    {
+                        if (task.Id != currentTask)
+                        {
+                            tasks.Add(task);
+                        }
+                    }
+
+                    return Task.WhenAll(tasks);
+                }
+            }
         }
 
         public void Refresh()
@@ -257,6 +278,21 @@ namespace HedgeModManager
             var root = ModsDatabase.RootDirectory;
 
             CodesDatabase = CodeFile.FromFiles(Path.Combine(root, ModsDB.CodesTextPath), Path.Combine(root, ModsDB.ExtraCodesTextPath));
+
+            var workCodesPath = Path.Combine(root, ModsDB.InternalsDirectory, ModsDB.WorkCodesPath);
+            if (Directory.Exists(workCodesPath))
+            {
+                foreach (var file in Directory.EnumerateFiles(Path.Combine(workCodesPath), "*.hmm", SearchOption.AllDirectories))
+                {
+                    var codes = CodeFile.FromFile(file);
+                    foreach (var code in codes.Codes)
+                    {
+                        CodesDatabase.Codes.RemoveAll(x => x.Name == code.Name);
+                        CodesDatabase.Codes.Add(code);
+                    }
+                }
+            }
+
             ModsDatabase.Codes.ForEach((x) =>
             {
                 var code = CodesDatabase.Codes.Find((y) => { return y.Name == x; });
@@ -515,16 +551,25 @@ namespace HedgeModManager
             try
             {
                 // Codes from disk.
-                string localCodes = File.ReadAllText(codesPath);
-                string repoCodes = await Singleton.GetInstance<HttpClient>().GetStringAsync(HedgeApp.CurrentGame.CodesURL + $"?t={DateTime.Now:yyyyMMddHHmmss}");
+                var localCodes = CodeFile.FromFile(codesPath);
 
-                if (ViewModel.CPKREDIR.UpdateCodesOnLaunch && localCodes != repoCodes)
+                var remoteContents = await Singleton.GetInstance<HttpClient>().GetStringAsync(HedgeApp.CurrentGame.CodesURL + $"?t={DateTime.Now:yyyyMMddHHmmss}");
+                var remoteCodes = CodeFile.FromText(remoteContents);
+
+                var diff = remoteCodes.CalculateDiff(localCodes).ToList();
+                if (diff.Count == 0)
                 {
-                    UpdateCodes();
+                    // No changes
+                    return;
+                }
+
+                if (RegistryConfig.UpdateCodesOnLaunch)
+                {
+                    UpdateCodes(remoteContents, diff);
                 }
                 else
                 {
-                    if (localCodes == repoCodes)
+                    if (diff.Count == 0)
                     {
                         CodesOutdated = false;
 
@@ -578,6 +623,11 @@ namespace HedgeModManager
 
         public async Task CheckAllModsUpdatesAsync(CancellationToken cancellationToken = default)
         {
+            if (ModsDatabase == null || ModsDatabase.Mods.Count == 0)
+            {
+                return;
+            }
+
             var updateMods = ModsDatabase.Where(x => x.HasUpdates).ToList();
             int completedCount = 0;
             int failedCount = 0;
@@ -667,7 +717,7 @@ namespace HedgeModManager
             // Force launcher if running on linux
             HedgeApp.CurrentGameInstall.StartGame(HedgeApp.Config.UseLauncher || HedgeApp.IsLinux);
 
-            if (!HedgeApp.Config.KeepOpen)
+            if (!RegistryConfig.KeepOpen)
                 Dispatcher.Invoke(() => Close());
 
             UpdateStatus(string.Format(Localise("StatusUIStartingGame"), HedgeApp.CurrentGame));
@@ -742,9 +792,10 @@ namespace HedgeModManager
 
         public async Task CheckForUpdatesAsync()
         {
-            await CheckForManagerUpdatesAsync();
-
-            if (HedgeApp.Config?.CheckForModUpdates == true)
+            await RunTask(CheckForManagerUpdatesAsync());
+            await RunTask(CheckForCodeUpdates());
+            
+            if (RegistryConfig.CheckModUpdates)
             {
                 ContextCancelSource = new CancellationTokenSource();
                 try
@@ -753,15 +804,13 @@ namespace HedgeModManager
                 }
                 catch (OperationCanceledException) { }
             }
-
-            await CheckForCodeUpdates();
         }
 
         public async Task CheckForManagerUpdatesAsync()
         {
-            if (!HedgeApp.Config?.CheckForUpdates == true && !ViewModel.DevBuild)
+            if (!RegistryConfig.CheckManagerUpdates)
                 return;
-
+            
             UpdateStatus(Localise("StatusUICheckingForUpdates"));
             try
             {
@@ -847,12 +896,13 @@ namespace HedgeModManager
 
         protected async Task CheckForLoaderUpdateAsync()
         {
-            if (!(HedgeApp.Config?.CheckLoaderUpdates == true))
+            if (!RegistryConfig.CheckLoaderUpdates)
                 return;
 
             if (HedgeApp.CurrentGame.ModLoader == null)
                 return;
-
+            
+            await WaitTasks(Task.CurrentId);
             await Task.Yield();
 
             UpdateStatus(string.Format(Localise("StatusUICheckingForLoaderUpdate"), HedgeApp.CurrentGame.ModLoader.ModLoaderName));
@@ -910,8 +960,8 @@ namespace HedgeModManager
             var info = HedgeApp.GetCodeLoaderInfo(HedgeApp.CurrentGame);
             if (CodesDatabase.Codes.Count == 0 || info == null)
                 return;
-
-            if (CodesDatabase.FileVersion >= info.MinCodeVersion && CodesDatabase.FileVersion <= info.MaxCodeVersion)
+            
+            if (CodesDatabase.FileVersion is { Major: 0, Minor: 0 } || (CodesDatabase.FileVersion >= info.MinCodeVersion && CodesDatabase.FileVersion <= info.MaxCodeVersion))
                 return;
 
             var dialog = new HedgeMessageBox(Localise("CommonUIWarning"), Localise("CodesUIVersionIncompatible"));
@@ -1436,17 +1486,33 @@ namespace HedgeModManager
             await RunTask(CheckForLoaderUpdateAsync());
         }
 
-        private void UpdateCodes()
+        private void UpdateCodes(string newContents = null, List<DiffBlock> diff = null)
         {
-            UpdateStatus(string.Format(Localise("StatusUIDownloadingCodes"), HedgeApp.CurrentGame));
+            string codesFilePath = Path.Combine(ModsDatabase.RootDirectory, ModsDB.CodesTextPath);
+            bool codesFileExists = File.Exists(codesFilePath);
+
             try
             {
-                string codesFilePath = Path.Combine(ModsDatabase.RootDirectory, ModsDB.CodesTextPath);
-                bool codesFileExists = File.Exists(codesFilePath);
-
                 /* Parse current codes list, since ModsDB.CodesDatabase
                    is contaminated with codes from ExtraCodes.hmm */
                 var oldCodes = codesFileExists ? new CodeFile(codesFilePath) : null;
+
+                if (!string.IsNullOrEmpty(newContents))
+                {
+                    File.WriteAllText(codesFilePath, newContents);
+                    UpdateStatus(Localise("StatusUIDownloadFinished"));
+
+                    Refresh();
+                    CodesOutdated = false;
+
+                    if (oldCodes != null)
+                    {
+                        diff ??= oldCodes.CalculateDiff(new CodeFile(codesFilePath)).ToList();
+                        DisplayDiff(diff);
+                    }
+
+                    return;
+                }
 
                 var downloader = new DownloadWindow(LocaliseFormat("StatusUIDownloadingCodes", HedgeApp.CurrentGame),
                     HedgeApp.CurrentGame.CodesURL + $"?t={DateTime.Now:yyyyMMddHHmmss}", codesFilePath)
@@ -1463,44 +1529,50 @@ namespace HedgeModManager
                         // Don't display diff for initial download.
                         if (oldCodes == null)
                             return;
-
-                        var diff = new CodeFile(codesFilePath).CalculateDiff(oldCodes);
-                        {
-                            var sb = new StringBuilder();
-
-                            foreach (var block in diff.ToList())
-                            {
-                                sb.AppendLine($"- {DiffBlockToString(block)}");
-
-                                if (block.Type == DiffType.Renamed)
-                                {
-                                    // Restore enabled state of renamed code.
-                                    if (ViewModel.ModsDB.Codes.Contains(block.Data.Key))
-                                        ViewModel.ModsDB.CodesDatabase.Codes.Find(x => x.Name == block.Data.Value).Enabled = true;
-                                }
-                            }
-
-                            if (!string.IsNullOrEmpty(sb.ToString()))
-                            {
-                                var box = new HedgeMessageBox(Localise("DiffUITitle"), sb.ToString(), textAlignment: TextAlignment.Left, type: InputType.MarkDown);
-                                {
-                                    box.AddButton(Localise("CommonUIOK"), () => box.Close());
-                                    box.ShowDialog();
-                                }
-                            }
-                            else
-                            {
-                                UpdateStatus(Localise("StatusUINoCodeUpdatesFound"));
-                            }
-                        }
+                        
+                        DisplayDiff(new CodeFile(codesFilePath).CalculateDiff(oldCodes).ToList());
                     }
                 };
 
+                UpdateStatus(string.Format(Localise("StatusUIDownloadingCodes"), HedgeApp.CurrentGame));
                 downloader.Start();
             }
             catch
             {
                 UpdateStatus(Localise("StatusUIDownloadFailed"));
+            }
+
+            void DisplayDiff(List<DiffBlock> blocks)
+            {
+                if (blocks.Count == 0)
+                {
+                    UpdateStatus(Localise("StatusUINoCodeUpdatesFound"));
+                    return;
+                }
+
+                var sb = new StringBuilder();
+
+                foreach (var block in blocks)
+                {
+                    sb.AppendLine($"- {DiffBlockToString(block)}");
+
+                    if (block.Type == DiffType.Renamed)
+                    {
+                        // Restore enabled state of renamed code.
+                        var code = ViewModel.ModsDB.CodesDatabase.Codes.Find(x => x.Name == block.Data.Value);
+                        if (code != null)
+                            code.Enabled = true;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(sb.ToString()))
+                {
+                    var box = new HedgeMessageBox(Localise("DiffUITitle"), sb.ToString(), textAlignment: TextAlignment.Left, type: InputType.MarkDown);
+                    {
+                        box.AddButton(Localise("CommonUIOK"), () => box.Close());
+                        box.ShowDialog();
+                    }
+                }
             }
         }
 
@@ -2188,6 +2260,11 @@ namespace HedgeModManager
                 if (CodesList.SelectedItems.Count == 1)
                     OpenAboutCodeWindow(CodesList.SelectedItem as CSharpCode);
             }
+        }
+
+        private void CheckBox_RegistryConfig_Checked(object sender, RoutedEventArgs e)
+        {
+            RegistryConfig.Save();
         }
 
         private void CheckBox_CodesUseTreeView_Checked(object sender, RoutedEventArgs e)

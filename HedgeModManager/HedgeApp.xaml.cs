@@ -208,7 +208,7 @@ namespace HedgeModManager
             GameInstalls = GameInstall.SearchForGames("SonicGenerations");
             var steamGame = GameInstalls.FirstOrDefault();
             SelectGameInstall(steamGame);
-            StartDirectory = steamGame.GameDirectory;
+            StartDirectory = steamGame?.GameDirectory ?? StartDirectory;
             if (File.Exists("key.priv.xml"))
             {
                 using (var stream = File.OpenRead("key.priv.xml"))
@@ -248,9 +248,9 @@ namespace HedgeModManager
                     string exePath = Path.Combine(StartDirectory, CurrentGame.ExecutableName);
                     if (IsCPKREDIRInstalled(exePath))
                         InstallCPKREDIR(exePath, false);
-                }
 
-                CurrentGame.ModLoader.MakeCompatible(StartDirectory);
+                    CurrentGame.ModLoader.MakeCompatible(StartDirectory);
+                }
             }
             catch { }
 
@@ -822,7 +822,7 @@ namespace HedgeModManager
 
         public static async Task<(bool, WorkflowRunInfo, ArtifactInfo)> CheckForUpdatesDevAsync()
         {
-            var runs = await GitHubAPI.GetAllRuns(RepoOwner, RepoName);
+            var runs = await GitHubAPI.GetAllRuns(RepoOwner, RepoName, "build.yml");
             var workflow = runs.Runs.FirstOrDefault();
             if (workflow == null)
                 return (false, null, null);
