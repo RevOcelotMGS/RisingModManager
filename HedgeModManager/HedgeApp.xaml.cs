@@ -742,7 +742,7 @@ namespace HedgeModManager
                         File.WriteAllBytes(DLLFileName, loader);
                     else
                     {
-                        CreateOKMessageBox("Hedge Mod Manager", Lang.Localise("MainUIMLDownloadFail")).ShowDialog();
+                        CreateOKMessageBox("Rising Mod Manager", Lang.Localise("MainUIMLDownloadFail")).ShowDialog();
                         if (File.Exists(DLLFileName))
                         {
                             try
@@ -758,7 +758,7 @@ namespace HedgeModManager
             }
             catch (Exception e)
             {
-                CreateOKMessageBox("Hedge Mod Manager",
+                CreateOKMessageBox("Rising Mod Manager",
                     installed ? Lang.Localise("MainUIMLUninstallFail") : Lang.Localise("MainUIMLInstallFail")).ShowDialog();
                 return false;
             }

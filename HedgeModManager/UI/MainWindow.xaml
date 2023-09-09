@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:HedgeModManager"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="Hedge Mod Manager (7.0)" Unloaded="MainWindow_OnUnloaded"
+        Title="Rising Mod Manager (7.10.3)" Unloaded="MainWindow_OnUnloaded"
         Loaded="Window_Loaded" PreviewKeyDown="Window_PreviewKeyDown"
         MinHeight="662" MinWidth="585" Height="662" Width="585" WindowStartupLocation="CenterScreen" Style="{StaticResource HedgeWindow}">
     <Window.Resources>

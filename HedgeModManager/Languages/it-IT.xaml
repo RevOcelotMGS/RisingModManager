@@ -57,7 +57,7 @@
     <system:String x:Key="ModsUIFeatureCodeDisable"  >Questa mod non contiene del codice personalizzato.</system:String>
     <system:String x:Key="ModsUIModDragDrop"    >Trascina e Rilascia gli oggetti per cambiare il loro ordine di esecuzione.</system:String>
     <system:String x:Key="ModsUISearch"         >Cerca: </system:String>
-    <system:String xml:space="preserve" x:Key="ModsUIInvalidIncludeDirs">Hedge Mod Manager ha rilevato che una o più mod hanno delle cartelle include invalide.&#x0a;Vuoi che Hedge Mod Manager provi a risolvere questo problema?</system:String>
+    <system:String xml:space="preserve" x:Key="ModsUIInvalidIncludeDirs">Rising Mod Manager ha rilevato che una o più mod hanno delle cartelle include invalide.&#x0a;Vuoi che Rising Mod Manager provi a risolvere questo problema?</system:String>
     <system:String xml:space="preserve" x:Key="ModsUINoMods">...Non c'è molto qua.&#x0a;Vai a scaricare delle mod!</system:String>
 
     <!-- Codes UI Strings -->
@@ -83,20 +83,20 @@
     <system:String x:Key="SettingsUILabelGame"      >Giochi:</system:String>
     <system:String x:Key="SettingsUILabelProfile"   >Profilo:</system:String>
     <system:String x:Key="SettingsUILabelMDir"      >Cartella Mod:</system:String>
-    <!--   Hedge Mod Manager -->
-    <system:String x:Key="SettingsUIHMMHeader"      >Hedge Mod Manager</system:String>
+    <!--   Rising Mod Manager -->
+    <system:String x:Key="SettingsUIHMMHeader"      >Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUICheckMLUpdate"  >Controlla gli aggiornamenti del mod loader</system:String>
     <system:String x:Key="SettingsUICheckCLUpdate"  >Controlla gli aggiornamenti del code loade</system:String>
     <system:String x:Key="SettingsUICheckModUpdates">Controlla gli aggiornamenti delle mod</system:String>
-    <system:String x:Key="SettingsUIKeepHMMOpen"    >Tieni aperto Hedge Mod Manager dopo aver lanciato il gioco</system:String>
+    <system:String x:Key="SettingsUIKeepHMMOpen"    >Tieni aperto Rising Mod Manager dopo aver lanciato il gioco</system:String>
     <system:String x:Key="SettingsUICheckHMMUpdate" >Controlla gli aggiornamenti</system:String>
-    <system:String x:Key="SettingsUIAboutHMM"       >Informazioni su Hedge Mod Manager</system:String>
+    <system:String x:Key="SettingsUIAboutHMM"       >Informazioni su Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUILanguage"       >Lingua:</system:String>
     <system:String x:Key="SettingsUITheme"          >Tema:</system:String>
     <system:String x:Key="SettingsUIReleaseChannel" >Canale Aggiornamenti:</system:String>
     <system:String x:Key="SettingsUIChangingChannelTitle" >Cambiando il canale di aggiornamenti</system:String>
-    <system:String x:Key="SettingsUIChangeChannelRel" xml:space="preserve">Stai per passare al canale Release.&#x0a;&#x0a;Sei sicuro che vuoi continuare? Hedge Mod Manager dovrà riavviarsi per cambiare canali.</system:String>
-    <system:String x:Key="SettingsUIChangeChannelDev" xml:space="preserve">Stai per passare al canale Development. Questo canale può contenere funzionalità non testati e bug.&#x0a;&#x0a;Sei sicuro che vuoi continuare? Hedge Mod Manager dovrà riavviarsi per cambiare canali.</system:String>
+    <system:String x:Key="SettingsUIChangeChannelRel" xml:space="preserve">Stai per passare al canale Release.&#x0a;&#x0a;Sei sicuro che vuoi continuare? Rising Mod Manager dovrà riavviarsi per cambiare canali.</system:String>
+    <system:String x:Key="SettingsUIChangeChannelDev" xml:space="preserve">Stai per passare al canale Development. Questo canale può contenere funzionalità non testati e bug.&#x0a;&#x0a;Sei sicuro che vuoi continuare? Rising Mod Manager dovrà riavviarsi per cambiare canali.</system:String>
 
     <!-- MainWindow UI Strings -->
     <system:String x:Key="MainUIInstallFormHeader"    >Installa una mod da...</system:String>
@@ -118,7 +118,7 @@
     <system:String x:Key="OptionsWindowUIError"      >Seleziona un'opzione!</system:String>
 
     <!-- AboutWindow UI Strings -->
-    <system:String x:Key="AboutWindowUITitle"      >Informazioni su Hedge Mod Manager</system:String>
+    <system:String x:Key="AboutWindowUITitle"      >Informazioni su Rising Mod Manager</system:String>
     <system:String x:Key="AboutWindowUILine1"      >Un programma progettato per aiutare le persone a caricare facilmente le mod di Hedgehog Engine.</system:String>
     <system:String x:Key="AboutWindowUILine2"      >Richiede una versione legale di uno dei giochi supportati.</system:String>
     <system:String x:Key="AboutWindowUICredits"    >Crediti</system:String>
@@ -172,7 +172,7 @@
     <system:String x:Key="StatusUINoCodeUpdatesFound"     >Nessun aggiornamento codice rilevato</system:String>
 
     <!-- Dialog UI Strings -->
-    <system:String xml:space="preserve" x:Key="DialogUINoGameDirAccess">Hedge Mod Manager non è riuscito ad accedere la cartella del gioco.&#x0a;Assicurati che il gruppo Utenti abbia il permesso &quot;Modifica&quot; impostato su Consenti in questa cartella e tutti i file e cartelle all'interno&#x0a;&#x0a;{0}</system:String>
+    <system:String xml:space="preserve" x:Key="DialogUINoGameDirAccess">Rising Mod Manager non è riuscito ad accedere la cartella del gioco.&#x0a;Assicurati che il gruppo Utenti abbia il permesso &quot;Modifica&quot; impostato su Consenti in questa cartella e tutti i file e cartelle all'interno&#x0a;&#x0a;{0}</system:String>
     <system:String xml:space="preserve" x:Key="DialogUIDeleteMod"      >Sei sicuro che vuoi rimuovere &quot;{0}&quot;?&#x0a;Questa azione non può essere annullata!</system:String>
     <system:String xml:space="preserve" x:Key="DialogUIModNewest"      >{0} è già aggiornato.</system:String>
     <system:String xml:space="preserve" x:Key="DialogUIModUpdate"      >Una versione nuvoa di {0} è disponibile! ({1})</system:String>
@@ -198,7 +198,7 @@
     <system:String x:Key="ModDownloaderFailed">Impossibile scaricare la mod</system:String>
     <system:String xml:space="preserve" x:Key="ModDownloaderWebError">Si è verificato un errore durante il download. I server potrebbero essere down o sovraccaricati. Riprova più tardi. &#x0a;&#x0a;Dettagli: {0}</system:String>
     <system:String x:Key="ModDownloaderNoGame">Impossibile trovare il gioco</system:String>
-    <system:String x:Key="ModDownloaderNoGameMes">Hedge Mod Manager non è riuscito a trovare un'installazione di {0}</system:String>
+    <system:String x:Key="ModDownloaderNoGameMes">Rising Mod Manager non è riuscito a trovare un'installazione di {0}</system:String>
 
     <!-- Mod Updates Window Strings -->
     <system:String x:Key="ModUpdatesChangelog"    >Modifiche</system:String>
@@ -207,16 +207,16 @@
     <system:String x:Key="ModDownloadsTitle"      >Download Mod</system:String>
 
     <!-- Exception Window Strings -->
-    <system:String x:Key="ExceptionWindowTitle"           >Hedge Mod Manager Crash</system:String>
-    <system:String x:Key="ExceptionWindowCrash"           >Hedge Mod Manager ha generato un errore!</system:String>
-    <system:String x:Key="ExceptionWindowUnhandled"       >Hedge Mod Manager HMM ha riscontrato un errore!</system:String>
+    <system:String x:Key="ExceptionWindowTitle"           >Rising Mod Manager Crash</system:String>
+    <system:String x:Key="ExceptionWindowCrash"           >Rising Mod Manager ha generato un errore!</system:String>
+    <system:String x:Key="ExceptionWindowUnhandled"       >Rising Mod Manager HMM ha riscontrato un errore!</system:String>
     <system:String x:Key="ExceptionWindowButtonCopyLog"   >Copia Log negli appunti</system:String>
     <system:String x:Key="ExceptionWindowButtonIgnore"    >Ignora e Chiudi</system:String>
     <system:String x:Key="ExceptionWindowButtonReport"    >Invia report su GitHub</system:String>
     <system:String x:Key="ExceptionWindowNewUpdateTitle"  >Nuovo aggiornamento disponibile!</system:String>
-    <system:String x:Key="ExceptionWindowNewUpdateText" xml:space="preserve" >Pare che questa versione di Hedge Mod Manager non è aggiornata.&#x0a;Si consiglia vivamente di aggiornare e vedere se il problema persiste.&#x0a;Vuoi scaricare l'aggiornamento ora</system:String>
+    <system:String x:Key="ExceptionWindowNewUpdateText" xml:space="preserve" >Pare che questa versione di Rising Mod Manager non è aggiornata.&#x0a;Si consiglia vivamente di aggiornare e vedere se il problema persiste.&#x0a;Vuoi scaricare l'aggiornamento ora</system:String>
     <system:String x:Key="ExceptionWindowUpdateErrorTitle">Errore Aggiornamento!</system:String>
-    <system:String x:Key="ExceptionWindowUpdateErrorText" xml:space="preserve" >Hedge Mod Manager non è riuscito ad aggiornarsi!&#x0a;Scarica manualmente l'ultimo aggiornamento.</system:String>
+    <system:String x:Key="ExceptionWindowUpdateErrorText" xml:space="preserve" >Rising Mod Manager non è riuscito ad aggiornarsi!&#x0a;Scarica manualmente l'ultimo aggiornamento.</system:String>
 
     <!-- Themes -->
     <system:String x:Key="ThemeDark"  >Scuro</system:String>

@@ -57,7 +57,7 @@
     <system:String x:Key="ModsUIFeatureCodeDisable"  >這個 Mod 不包含 自定義代碼。</system:String>
     <system:String x:Key="ModsUIModDragDrop"    >拖放資料來更改 Mod 加載順序。</system:String>
     <system:String x:Key="ModsUISearch"         >尋找：</system:String>
-    <system:String xml:space="preserve" x:Key="ModsUIInvalidIncludeDirs">Hedge Mod Manager 已檢測到一個或多個 Mod 包含無效的包含目錄。&#x0a; 您是否希望Hedge Mod Manager 嘗試修正？</system:String>
+    <system:String xml:space="preserve" x:Key="ModsUIInvalidIncludeDirs">Rising Mod Manager 已檢測到一個或多個 Mod 包含無效的包含目錄。&#x0a; 您是否希望Rising Mod Manager 嘗試修正？</system:String>
     <system:String xml:space="preserve" x:Key="ModsUINoMods">...這裡什麼都沒有。&#x0a; 去下載一些 Mod 吧！</system:String>
 
     <!-- Codes UI Strings -->
@@ -98,21 +98,21 @@
     <system:String x:Key="SettingsUILabelGame"      >遊戲：</system:String>
     <system:String x:Key="SettingsUILabelProfile"   >設定檔：</system:String>
     <system:String x:Key="SettingsUILabelMDir"      >Mod 目錄：</system:String>
-    <!--   Hedge Mod Manager -->
-    <system:String x:Key="SettingsUIHMMHeader"       >Hedge Mod Manager</system:String>
+    <!--   Rising Mod Manager -->
+    <system:String x:Key="SettingsUIHMMHeader"       >Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUICheckMLUpdate"   >檢查 Mod 載入器是否有更新</system:String>
     <system:String x:Key="SettingsUICheckCLUpdate"   >檢查 代碼載入器是否有更新</system:String>
     <system:String x:Key="SettingsUICheckModUpdates" >檢查 Mod 是否有更新</system:String>
     <system:String x:Key="SettingsUIKeepHMMOpen"     >運行後並保持程式開啟</system:String>
     <system:String x:Key="SettingsUICodesUseTreeView">使用 (樹視圖) 顯示代碼列表</system:String>
     <system:String x:Key="SettingsUICheckHMMUpdate"  >檢查更新</system:String>
-    <system:String x:Key="SettingsUIAboutHMM"        >關於 Hedge Mod Manager</system:String>
+    <system:String x:Key="SettingsUIAboutHMM"        >關於 Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUILanguage"        >語言：</system:String>
     <system:String x:Key="SettingsUITheme"           >主題：</system:String>
     <system:String x:Key="SettingsUIReleaseChannel"  >更新頻道：</system:String>
     <system:String x:Key="SettingsUIChangingChannelTitle" >更變發布渠道</system:String>
-    <system:String x:Key="SettingsUIChangeChannelRel" xml:space="preserve">您即將切換到發布頻道。&#x0a;&#x0a; 確定要繼續嗎？ Hedge Mod Manager 需要重新啟動才能更改頻道。</system:String>
-    <system:String x:Key="SettingsUIChangeChannelDev" xml:space="preserve">您即將切換到開發頻道。 此頻道可能包含未經測試的功能和錯誤。 &#x0a;&#x0a; 您確定要繼續嗎？ Hedge Mod Manager 需要重新啟動才能更改頻道。</system:String>
+    <system:String x:Key="SettingsUIChangeChannelRel" xml:space="preserve">您即將切換到發布頻道。&#x0a;&#x0a; 確定要繼續嗎？ Rising Mod Manager 需要重新啟動才能更改頻道。</system:String>
+    <system:String x:Key="SettingsUIChangeChannelDev" xml:space="preserve">您即將切換到開發頻道。 此頻道可能包含未經測試的功能和錯誤。 &#x0a;&#x0a; 您確定要繼續嗎？ Rising Mod Manager 需要重新啟動才能更改頻道。</system:String>
 
     <!-- MainWindow UI Strings -->
     <system:String x:Key="MainUIInstallFormHeader"    >Mod 安裝方法</system:String>
@@ -134,7 +134,7 @@
     <system:String x:Key="OptionsWindowUIError"      >請選擇至少一項！</system:String>
 
     <!-- AboutWindow UI Strings -->
-    <system:String x:Key="AboutWindowUITitle"      >關於 Hedge Mod Manager</system:String>
+    <system:String x:Key="AboutWindowUITitle"      >關於 Rising Mod Manager</system:String>
     <system:String x:Key="AboutWindowUILine1"      >設計 Hedgehog Engine 程式是更容易地運行 Mod</system:String>
     <system:String x:Key="AboutWindowUILine2"      >需要 「正版遊戲」 來運行</system:String>
     <system:String x:Key="AboutWindowUICredits"    >來源：</system:String>
@@ -188,7 +188,7 @@
     <system:String x:Key="StatusUINoCodeUpdatesFound"     >未找到 代碼更新</system:String>
 
     <!-- Dialog UI Strings -->
-    <system:String xml:space="preserve" x:Key="DialogUINoGameDirAccess">Hedge Mod Manager 無法讀取遊戲目錄。&#x0a;請確保以下目錄及其所有文件和文件夾的用戶組「寫入」設置為允許。&#x0a;&#x0a;{0}</system:String>
+    <system:String xml:space="preserve" x:Key="DialogUINoGameDirAccess">Rising Mod Manager 無法讀取遊戲目錄。&#x0a;請確保以下目錄及其所有文件和文件夾的用戶組「寫入」設置為允許。&#x0a;&#x0a;{0}</system:String>
     <system:String xml:space="preserve" x:Key="DialogUIDeleteMod"      >您確定要刪除 「{0}」？ &#x0a; 此操作無法撤消！</system:String>
     <system:String xml:space="preserve" x:Key="DialogUIModNewest"      >{0} 已經是最新的。</system:String>
     <system:String xml:space="preserve" x:Key="DialogUIModUpdate"      >({1}) 已找到可用 {0} 的較新的版本！</system:String>
@@ -214,7 +214,7 @@
     <system:String x:Key="ModDownloaderFailed">無法下載 Mod</system:String>
     <system:String xml:space="preserve" x:Key="ModDownloaderWebError">下載期間發生錯誤。 服務器可能已關閉或超載。 請稍後再嘗試。 &#x0a;&#x0a; 詳情: {0}</system:String>
     <system:String x:Key="ModDownloaderNoGame">找不到遊戲</system:String>
-    <system:String x:Key="ModDownloaderNoGameMes">Hedge Mod Manager 無法找到 {0} 安裝程序</system:String>
+    <system:String x:Key="ModDownloaderNoGameMes">Rising Mod Manager 無法找到 {0} 安裝程序</system:String>
 
     <!-- Mod Updates Window Strings -->
     <system:String x:Key="ModUpdatesChangelog"    >更改日誌</system:String>
@@ -223,16 +223,16 @@
     <system:String x:Key="ModDownloadsTitle"      >Mod 下載</system:String>
 
     <!-- Exception Window Strings -->
-    <system:String x:Key="ExceptionWindowTitle"           >Hedge Mod Manager 崩潰了</system:String>
-    <system:String x:Key="ExceptionWindowCrash"           >Hedge Mod Manager 出現異常！</system:String>
-    <system:String x:Key="ExceptionWindowUnhandled"       >Hedge Mod Manager 遇到錯誤！</system:String>
+    <system:String x:Key="ExceptionWindowTitle"           >Rising Mod Manager 崩潰了</system:String>
+    <system:String x:Key="ExceptionWindowCrash"           >Rising Mod Manager 出現異常！</system:String>
+    <system:String x:Key="ExceptionWindowUnhandled"       >Rising Mod Manager 遇到錯誤！</system:String>
     <system:String x:Key="ExceptionWindowButtonCopyLog"   >將日誌複製到剪貼板</system:String>
     <system:String x:Key="ExceptionWindowButtonIgnore"    >忽略並關閉</system:String>
     <system:String x:Key="ExceptionWindowButtonReport"    >在 GitHub 上提交報告</system:String>
     <system:String x:Key="ExceptionWindowNewUpdateTitle"  >有 新更新可用！</system:String>
-    <system:String x:Key="ExceptionWindowNewUpdateText" xml:space="preserve" >這個版本的 Hedge Mod Manager 似乎已經過時了。 &#x0a; 強烈建議先更新，再看看問題是否仍然存在。 &#x0a; 要更新嗎？</system:String>
+    <system:String x:Key="ExceptionWindowNewUpdateText" xml:space="preserve" >這個版本的 Rising Mod Manager 似乎已經過時了。 &#x0a; 強烈建議先更新，再看看問題是否仍然存在。 &#x0a; 要更新嗎？</system:String>
     <system:String x:Key="ExceptionWindowUpdateErrorTitle">更新錯誤！</system:String>
-    <system:String x:Key="ExceptionWindowUpdateErrorText" xml:space="preserve" >Hedge Mod Manager 無法更新！ &#x0a; 請手動下載最新版本。</system:String>
+    <system:String x:Key="ExceptionWindowUpdateErrorText" xml:space="preserve" >Rising Mod Manager 無法更新！ &#x0a; 請手動下載最新版本。</system:String>
 
     <!-- Themes -->
     <system:String x:Key="ThemeDark"  >深色</system:String>

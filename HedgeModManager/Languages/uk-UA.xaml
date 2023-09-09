@@ -57,7 +57,7 @@
     <system:String x:Key="ModsUIFeatureCodeDisable"  >Цей мод не містить користувацького коду.</system:String>
     <system:String x:Key="ModsUIModDragDrop"    >Перетягуйте елементи, щоб змінити порядок завантаження модифікацій.</system:String>
     <system:String x:Key="ModsUISearch"         >Пошук: </system:String>
-    <system:String xml:space="preserve" x:Key="ModsUIInvalidIncludeDirs">Hedge Mod Manager виявив, що один або декілька модів мають невірні директорії включення.&#x0a;Ви хочете, щоб Hedge Mod Manager спробував виправити це?</system:String>
+    <system:String xml:space="preserve" x:Key="ModsUIInvalidIncludeDirs">Rising Mod Manager виявив, що один або декілька модів мають невірні директорії включення.&#x0a;Ви хочете, щоб Rising Mod Manager спробував виправити це?</system:String>
     <system:String xml:space="preserve" x:Key="ModsUINoMods">...Тут не так вже й багато...&#x0a;Ідіть качайте моди!</system:String>
 
     <!-- Codes UI Strings -->
@@ -98,21 +98,21 @@
     <system:String x:Key="SettingsUILabelGame"      >Гра:</system:String>
     <system:String x:Key="SettingsUILabelProfile"   >Профіль:</system:String>
     <system:String x:Key="SettingsUILabelMDir"      >Каталог Модів:</system:String>
-    <!--   Hedge Mod Manager -->
-    <system:String x:Key="SettingsUIHMMHeader"       >Hedge Mod Manager</system:String>
+    <!--   Rising Mod Manager -->
+    <system:String x:Key="SettingsUIHMMHeader"       >Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUICheckMLUpdate"   >Перевірити наявність оновлень завантажувача модифікацій</system:String>
     <system:String x:Key="SettingsUICheckCLUpdate"   >Перевірити наявність оновлень кодів</system:String>
     <system:String x:Key="SettingsUICheckModUpdates" >Перевірити наявність оновлень модів</system:String>
-    <system:String x:Key="SettingsUIKeepHMMOpen"     >Тримати Hedge Mod Manager відкритим після запуску гри</system:String>
+    <system:String x:Key="SettingsUIKeepHMMOpen"     >Тримати Rising Mod Manager відкритим після запуску гри</system:String>
     <system:String x:Key="SettingsUICodesUseTreeView">Використовувати деревоподібний список кодів</system:String>
     <system:String x:Key="SettingsUICheckHMMUpdate"  >Перевірити наявність оновлень</system:String>
-    <system:String x:Key="SettingsUIAboutHMM"        >Про Hedge Mod Manager</system:String>
+    <system:String x:Key="SettingsUIAboutHMM"        >Про Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUILanguage"        >Мова (Language):</system:String>
     <system:String x:Key="SettingsUITheme"           >Тема:</system:String>
     <system:String x:Key="SettingsUIReleaseChannel"  >Канал Оновлень:</system:String>
     <system:String x:Key="SettingsUIChangingChannelTitle" >Зміна Каналів Випуску</system:String>
-    <system:String x:Key="SettingsUIChangeChannelRel" xml:space="preserve">Ви збираєтеся перейти на канал Реліз.&#x0a;&#x0a;Ви впевнені, що хочете продовжити? Hedge Mod Manager потрібно перезапустити, щоб змінити канали.</system:String>
-    <system:String x:Key="SettingsUIChangeChannelDev" xml:space="preserve">Ви зараз перейдете на канал Розробка. Цей канал може містити неперевірені функції та помилки.&#x0a;&#x0a;Ви впевнені, що хочете продовжити? Hedge Mod Manager потрібно перезапустити, щоб змінити канал.</system:String>
+    <system:String x:Key="SettingsUIChangeChannelRel" xml:space="preserve">Ви збираєтеся перейти на канал Реліз.&#x0a;&#x0a;Ви впевнені, що хочете продовжити? Rising Mod Manager потрібно перезапустити, щоб змінити канали.</system:String>
+    <system:String x:Key="SettingsUIChangeChannelDev" xml:space="preserve">Ви зараз перейдете на канал Розробка. Цей канал може містити неперевірені функції та помилки.&#x0a;&#x0a;Ви впевнені, що хочете продовжити? Rising Mod Manager потрібно перезапустити, щоб змінити канал.</system:String>
 
     <!-- MainWindow UI Strings -->
     <system:String x:Key="MainUIInstallFormHeader"    >Встановити мод за допомогою...</system:String>
@@ -134,7 +134,7 @@
     <system:String x:Key="OptionsWindowUIError"      >Будь ласка, оберіть опцію!</system:String>
 
     <!-- AboutWindow UI Strings -->
-    <system:String x:Key="AboutWindowUITitle"      >Про Hedge Mod Manager</system:String>
+    <system:String x:Key="AboutWindowUITitle"      >Про Rising Mod Manager</system:String>
     <system:String x:Key="AboutWindowUILine1"      >Програма, розроблена, щоб допомогти людям легко завантажувати моди для Hedgehog Engine.</system:String>
     <system:String x:Key="AboutWindowUILine2"      >Потрібні ліцензійні версії підтримуваних ігор.</system:String>
     <system:String x:Key="AboutWindowUICredits"    >Автори</system:String>
@@ -188,7 +188,7 @@
     <system:String x:Key="StatusUINoCodeUpdatesFound"     >Не знайдено оновлень кодів</system:String>
 
     <!-- Dialog UI Strings -->
-    <system:String xml:space="preserve" x:Key="DialogUINoGameDirAccess">Hedge Mod Manager не зміг отримати доступ до каталогу гри.&#x0a;Будь ласка, переконайтеся, що для групи користувачів &quot;Запис&quot; встановлено значення Дозволити для наведеного нижче каталогу та всіх його файлів і папок.&#x0a;&#x0a;{0}</system:String>
+    <system:String xml:space="preserve" x:Key="DialogUINoGameDirAccess">Rising Mod Manager не зміг отримати доступ до каталогу гри.&#x0a;Будь ласка, переконайтеся, що для групи користувачів &quot;Запис&quot; встановлено значення Дозволити для наведеного нижче каталогу та всіх його файлів і папок.&#x0a;&#x0a;{0}</system:String>
     <system:String xml:space="preserve" x:Key="DialogUIDeleteMod"      >Ви впевнені, що хочете видалити &quot;{0}&quot;?&#x0a;Цю дію не можна скасувати!</system:String>
     <system:String xml:space="preserve" x:Key="DialogUIModNewest"      >{0} вже оновлений.</system:String>
     <system:String xml:space="preserve" x:Key="DialogUIModUpdate"      >Доступна нова версія {0}! ({1})</system:String>
@@ -214,7 +214,7 @@
     <system:String x:Key="ModDownloaderFailed">Не Вдалося Завантажити Мод</system:String>
     <system:String xml:space="preserve" x:Key="ModDownloaderWebError">Під час завантаження сталася помилка. Сервери можуть бути непрацюючими або перевантаженими. Будь ласка, спробуйте пізніше. &#x0a;&#x0a;Деталі: {0}</system:String>
     <system:String x:Key="ModDownloaderNoGame">Не вдалось знайти гру</system:String>
-    <system:String x:Key="ModDownloaderNoGameMes">Hedge Mod Manager не вдалося знайти інсталяцію {0}</system:String>
+    <system:String x:Key="ModDownloaderNoGameMes">Rising Mod Manager не вдалося знайти інсталяцію {0}</system:String>
 
     <!-- Mod Updates Window Strings -->
     <system:String x:Key="ModUpdatesChangelog"    >Список змін</system:String>
@@ -223,16 +223,16 @@
     <system:String x:Key="ModDownloadsTitle"      >Завантаження модів</system:String>
 
     <!-- Exception Window Strings -->
-    <system:String x:Key="ExceptionWindowTitle"           >Hedge Mod Manager Вилетів</system:String>
-    <system:String x:Key="ExceptionWindowCrash"           >Hedge Mod Manager зробив виключення!</system:String>
-    <system:String x:Key="ExceptionWindowUnhandled"       >Виникла помилка у Hedge Mod Manager</system:String>
+    <system:String x:Key="ExceptionWindowTitle"           >Rising Mod Manager Вилетів</system:String>
+    <system:String x:Key="ExceptionWindowCrash"           >Rising Mod Manager зробив виключення!</system:String>
+    <system:String x:Key="ExceptionWindowUnhandled"       >Виникла помилка у Rising Mod Manager</system:String>
     <system:String x:Key="ExceptionWindowButtonCopyLog"   >Копіювання журналу до буфера обміну</system:String>
     <system:String x:Key="ExceptionWindowButtonIgnore"    >Ігнорувати та закрити</system:String>
     <system:String x:Key="ExceptionWindowButtonReport"    >Надіслати звіт на GitHub</system:String>
     <system:String x:Key="ExceptionWindowNewUpdateTitle"  >Доступне нове оновлення!</system:String>
-    <system:String x:Key="ExceptionWindowNewUpdateText" xml:space="preserve" >Схоже, що ця версія Hedge Mod Manager застаріла.&#x0a;Наполегливо рекомендується спочатку оновити програму і перевірити, чи проблема все ще виникає.&#x0a;Бажаєте оновити програму зараз?</system:String>
+    <system:String x:Key="ExceptionWindowNewUpdateText" xml:space="preserve" >Схоже, що ця версія Rising Mod Manager застаріла.&#x0a;Наполегливо рекомендується спочатку оновити програму і перевірити, чи проблема все ще виникає.&#x0a;Бажаєте оновити програму зараз?</system:String>
     <system:String x:Key="ExceptionWindowUpdateErrorTitle">Помилка оновлення!</system:String>
-    <system:String x:Key="ExceptionWindowUpdateErrorText" xml:space="preserve" >Hedge Mod Manager не вдалося оновити!&#x0a;Будь ласка, завантажте останню версію вручну.</system:String>
+    <system:String x:Key="ExceptionWindowUpdateErrorText" xml:space="preserve" >Rising Mod Manager не вдалося оновити!&#x0a;Будь ласка, завантажте останню версію вручну.</system:String>
 
     <!-- Themes -->
     <system:String x:Key="ThemeDark"  >Темна</system:String>

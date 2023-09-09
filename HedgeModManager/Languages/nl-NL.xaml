@@ -60,13 +60,13 @@
     <system:String x:Key="SettingsUILabelGame"      >Spel:</system:String>
     <system:String x:Key="SettingsUILabelProfile"   >Profiel:</system:String>
     <system:String x:Key="SettingsUILabelMDir"      >Mod Map:</system:String>
-    <!--   Hedge Mod Manager -->
-    <system:String x:Key="SettingsUIHMMHeader"      >Hedge Mod Manager</system:String>
+    <!--   Rising Mod Manager -->
+    <system:String x:Key="SettingsUIHMMHeader"      >Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUICheckMLUpdate"  >Controleren Op Mod Lader Updates</system:String>
     <system:String x:Key="SettingsUICheckCLUpdate"  >Controleren Op Code Lader Updates</system:String>
     <system:String x:Key="SettingsUICheckModUpdates">Controleren Op Mod Updates</system:String>
-    <system:String x:Key="SettingsUIKeepHMMOpen"    >Hedge Mod Manager Open Houden Na Het Starten Van Een Spel</system:String>
-    <system:String x:Key="SettingsUIAboutHMM"       >Over Hedge Mod Manager</system:String>
+    <system:String x:Key="SettingsUIKeepHMMOpen"    >Rising Mod Manager Open Houden Na Het Starten Van Een Spel</system:String>
+    <system:String x:Key="SettingsUIAboutHMM"       >Over Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUILanguage"       >Taal:</system:String>
     <system:String x:Key="SettingsUITheme"          >Thema:</system:String>
 
@@ -88,7 +88,7 @@
     <system:String x:Key="OptionsWindowUIError"      >Selecteer An Optie A.U.B!</system:String>
 
     <!-- AboutWindow UI Strings -->
-    <system:String x:Key="AboutWindowUITitle"  >Over Hedge Mod Manager</system:String>
+    <system:String x:Key="AboutWindowUITitle"  >Over Rising Mod Manager</system:String>
     <system:String x:Key="AboutWindowUILine1"  >Een Programa Gemaakt Voor Het Makkelijk Laden Van Hedgehog Engine Moddificaties.</system:String>
     <system:String x:Key="AboutWindowUILine2"  >Vereist Een Legale Versie Van Een Van De ondersteunde Spellen.</system:String>
     <system:String x:Key="AboutWindowUICredits">Credits</system:String>
@@ -156,6 +156,6 @@
     <system:String x:Key="ModDownloaderFailed">Downloaden van Mod Mislukt</system:String>
     <system:String xml:space="preserve" x:Key="ModDownloaderWebError">Er is een fout opgetreden tijdens het downloaden. Servers zijn mogelijk uitgeschakeld of overbelast. Probeer het later nog eens. &#x0a;&#x0a;Details: {0}</system:String>
     <system:String x:Key="ModDownloaderNoGame">Kan Game Niet Vinden</system:String>
-    <system:String x:Key="ModDownloaderNoGameMes">Hedge Mod Manager kon geen installatie vinden van {0}</system:String>
+    <system:String x:Key="ModDownloaderNoGameMes">Rising Mod Manager kon geen installatie vinden van {0}</system:String>
     
 </ResourceDictionary>

@@ -71,11 +71,11 @@ namespace HedgeModManager
 
             if (baseExec != null)
             {
-                GenerateDesktopAndRegister("hedgemm.desktop", "Hedge Mod Manager", $"{baseExec} \"%u\"", icon, true, "x-scheme-handler/hedgemm");
+                GenerateDesktopAndRegister("hedgemm.desktop", "Rising Mod Manager", $"{baseExec} \"%u\"", icon, true, "x-scheme-handler/hedgemm");
                 
                 // GameBanana
                 foreach (Game game in Games.GetSupportedGames())
-                    GenerateDesktopAndRegister($"{game.GBProtocol}.desktop", $"Hedge Mod Manager ({game.GameName})", $"{baseExec} -gb \"%u\"", icon, false, $"x-scheme-handler/{game.GBProtocol}");
+                    GenerateDesktopAndRegister($"{game.GBProtocol}.desktop", $"Rising Mod Manager ({game.GameName})", $"{baseExec} -gb \"%u\"", icon, false, $"x-scheme-handler/{game.GBProtocol}");
             }
 
             return true;

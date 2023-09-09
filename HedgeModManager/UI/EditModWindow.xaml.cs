@@ -32,7 +32,7 @@ namespace HedgeModManager
                 Mod.IncludeDirsProperty.Add(new StringWrapper(dir));
 
             InitializeComponent();
-            Title = string.IsNullOrEmpty(mod.Title) ? "Hedge Mod Manager" : $"Edit {mod.Title}";
+            Title = string.IsNullOrEmpty(mod.Title) ? "Rising Mod Manager" : $"Edit {mod.Title}";
             Editor.TabVisibility = TabVisibility.Collapsed;
             Editor.ControlFactory = new PropertyGridControlFactoryEx();
             Editor.DataContext = Mod;

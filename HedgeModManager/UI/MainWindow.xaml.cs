@@ -860,7 +860,7 @@ namespace HedgeModManager
                 {
                     var asset = release.Assets[0];
                     dialog.Close();
-                    var downloader = new DownloadWindow($"Downloading Hedge Mod Manager ({release.TagName})", asset.BrowserDownloadUrl.ToString(), path)
+                    var downloader = new DownloadWindow($"Downloading Rising Mod Manager ({release.TagName})", asset.BrowserDownloadUrl.ToString(), path)
                     {
                         DownloadCompleted = () => HedgeApp.PerformUpdate(path, asset.ContentType)
                     };
@@ -1780,7 +1780,7 @@ namespace HedgeModManager
 
                         File.WriteAllText(path, Convert.ToBase64String(SnapshotBuilder.Build()));
                         Process.Start($"explorer.exe", $"/select,\"{Path.GetFullPath(path)}\"");
-                        HedgeApp.CreateOKMessageBox("Hedge Mod Manager", $"Please attach the file\n{path}\nto the issue.").ShowDialog();
+                        HedgeApp.CreateOKMessageBox("Rising Mod Manager", $"Please attach the file\n{path}\nto the issue.").ShowDialog();
                     }
                     catch { }
                 }
@@ -1966,7 +1966,7 @@ namespace HedgeModManager
                         if (release.Assets.Count > 0)
                         {
                             var asset = release.Assets[0];
-                            var downloader = new DownloadWindow($"Downloading Hedge Mod Manager ({release.TagName})", asset.BrowserDownloadUrl.ToString(), path)
+                            var downloader = new DownloadWindow($"Downloading Rising Mod Manager ({release.TagName})", asset.BrowserDownloadUrl.ToString(), path)
                             {
                                 DownloadCompleted = () =>
                                 {

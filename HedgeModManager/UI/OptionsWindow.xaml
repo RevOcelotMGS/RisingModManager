@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HedgeModManager"
         mc:Ignorable="d"
-        Title="Hedge Mod Manager" Height="Auto" Width="Auto" MinWidth="400" MinHeight="200" Style="{StaticResource HedgeWindow}" 
+        Title="Rising Mod Manager" Height="Auto" Width="Auto" MinWidth="400" MinHeight="200" Style="{StaticResource HedgeWindow}" 
         SizeToContent="WidthAndHeight" ContentRendered="Window_ContentRendered" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>

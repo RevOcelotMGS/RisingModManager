@@ -164,7 +164,7 @@ namespace HedgeModManager
 #endif
 
                 Process.Start($"explorer.exe", $"/select,\"{Path.GetFullPath(path)}\"");
-                HedgeApp.CreateOKMessageBox("Hedge Mod Manager", $"Please attach the file\n{path}\nto the issue.").ShowDialog();
+                HedgeApp.CreateOKMessageBox("Rising Mod Manager", $"Please attach the file\n{path}\nto the issue.").ShowDialog();
             }
             catch { }
         }
@@ -197,7 +197,7 @@ namespace HedgeModManager
                                 var path = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.exe");
 
                                 var asset = ReleaseInfo.Assets[0];
-                                var downloader = new DownloadWindow($"Downloading Hedge Mod Manager ({ReleaseInfo.TagName})", asset.BrowserDownloadUrl.ToString(), path)
+                                var downloader = new DownloadWindow($"Downloading Rising Mod Manager ({ReleaseInfo.TagName})", asset.BrowserDownloadUrl.ToString(), path)
                                 {
                                     DownloadCompleted = () =>
                                     {

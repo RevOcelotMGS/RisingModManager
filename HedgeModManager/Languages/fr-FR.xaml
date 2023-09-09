@@ -36,7 +36,7 @@
     <system:String x:Key="ModsUIModEdit"        >Modifier mod</system:String>
     <system:String x:Key="ModsUIModDelete"      >Supprimer mod</system:String>
     <system:String x:Key="ModsUIModDragDrop"    >Maintenir et déplacer pour changer l'ordre de priorité.</system:String>
-    <system:String xml:space="preserve" x:Key="ModsUIInvalidIncludeDirs">Hedge Mod Manager a détecté que un ou plusieurs mods&#x0a;contient(nent) un dossier include invalide.&#x0a;Voulez-vous que Hedge Mod Manager essaye de corriger le problème?</system:String>
+    <system:String xml:space="preserve" x:Key="ModsUIInvalidIncludeDirs">Rising Mod Manager a détecté que un ou plusieurs mods&#x0a;contient(nent) un dossier include invalide.&#x0a;Voulez-vous que Rising Mod Manager essaye de corriger le problème?</system:String>
 
     <!-- Codes UI Strings -->
     <system:String x:Key="CodesUIName"    >Nom</system:String>
@@ -55,13 +55,13 @@
     <system:String x:Key="SettingsUILabelLoaders"   >Loaders:</system:String>
     <system:String x:Key="SettingsUILabelGame"      >Jeu:</system:String>
     <system:String x:Key="SettingsUILabelMDir"      >Emplacement:</system:String>
-    <!--   Hedge Mod Manager -->
-    <system:String x:Key="SettingsUIHMMHeader"      >Hedge Mod Manager</system:String>
+    <!--   Rising Mod Manager -->
+    <system:String x:Key="SettingsUIHMMHeader"      >Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUICheckMLUpdate"  >Vérifier les mises à jour pour le mod loader</system:String>
     <system:String x:Key="SettingsUICheckCLUpdate"  >Vérifier les mises à jour pour le code loader</system:String>
     <system:String x:Key="SettingsUICheckModUpdates">Vérifier les mises à jour pour les mods</system:String>
     <system:String x:Key="SettingsUIKeepHMMOpen"    >Laisser Hedge Mod Mananger ouvert après démarrage du jeu</system:String>
-    <system:String x:Key="SettingsUIAboutHMM"       >A propos de Hedge Mod Manager</system:String>
+    <system:String x:Key="SettingsUIAboutHMM"       >A propos de Rising Mod Manager</system:String>
     <system:String x:Key="SettingsUILanguage"       >Langue:</system:String>
 
     <!-- MainWindow UI Strings -->
@@ -77,7 +77,7 @@
     <system:String x:Key="OptionsWindowUIError"      >Veuillez choisir une option!</system:String>
 
     <!-- AboutWindow UI Strings -->
-    <system:String x:Key="AboutWindowUITitle">A propos de Hedge Mod Manager</system:String>
+    <system:String x:Key="AboutWindowUITitle">A propos de Rising Mod Manager</system:String>
     <system:String x:Key="AboutWindowUILine1">Un programme conçu pour facilement charger des mods fait pour l'Hedgehog Engine.</system:String>
     <system:String x:Key="AboutWindowUILine2">Nécessite une copie légitime des jeux.</system:String>
     <system:String x:Key="AboutWindowUICredits">Credits:</system:String>
