@@ -164,14 +164,6 @@ namespace HedgeModManager
 
         public static IEnumerable<Game> GetSupportedGames()
         {
-            yield return SonicGenerations;
-            yield return SonicLostWorld;
-            yield return SonicForces;
-            yield return PuyoPuyoTetris2;
-            yield return Tokyo2020;
-            yield return SonicColorsUltimate;
-            yield return SonicOrigins;
-            yield return SonicFrontiers;
             yield return MetalGearRising;
         }
     }
