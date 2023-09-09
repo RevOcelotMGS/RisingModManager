@@ -136,7 +136,7 @@
 
     <!-- AboutWindow UI Strings -->
     <system:String x:Key="AboutWindowUITitle"      >About Rising Mod Manager</system:String>
-    <system:String x:Key="AboutWindowUILine1"      >A program designed to help people easily load Hedgehog Engine mods.</system:String>
+    <system:String x:Key="AboutWindowUILine1"      >A program designed to help people easily load mods for Metal Gear Rising: Revengeance.</system:String>
     <system:String x:Key="AboutWindowUILine2"      >Requires a legally owned version of one of the supported games.</system:String>
     <system:String x:Key="AboutWindowUICredits"    >Credits</system:String>
     <system:String x:Key="AboutWindowUITranslators">Translators</system:String>

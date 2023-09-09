@@ -119,7 +119,7 @@
 
     <!-- AboutWindow UI Strings -->
     <system:String x:Key="AboutWindowUITitle"      >Über den Rising Mod Manager</system:String>
-    <system:String x:Key="AboutWindowUILine1"      >Ein Programm, das hilft Hedgehog Engine Mods einfach zu laden.</system:String>
+    <system:String x:Key="AboutWindowUILine1"	   >Ein Programm, das hilft Mods für Metal Gear Rising: Revengeance einfach zu laden.</system:String>
     <system:String x:Key="AboutWindowUILine2"      >Benötigt eine legale Version eines der unterstützten Spiele.</system:String>
     <system:String x:Key="AboutWindowUICredits"    >Credits</system:String>
     <system:String x:Key="AboutWindowUITranslators">Übersetzer</system:String>
