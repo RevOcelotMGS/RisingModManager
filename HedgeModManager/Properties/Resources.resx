@@ -173,7 +173,7 @@ Do you want run the HMM Auto Installer?</value>
     <value>https://github.com/thesupersonic16/HedgeModManager/raw/rewrite/HedgeModManager/Resources/ModLoader/LostCodeLoader.dll</value>
   </data>
   <data name="URL_LOADERS_INI" xml:space="preserve">
-    <value>https://raw.githubusercontent.com/thesupersonic16/HedgeModManager/rewrite/HedgeModManager/Resources/ModLoader/Loaders.ini</value>
+    <value>https://raw.githubusercontent.com/RevOcelotMGS/RisingModManager/rewrite/HedgeModManager/Resources/ModLoader/Loaders.ini</value>
   </data>
   <data name="URL_MUSASHI_CODES" xml:space="preserve">
     <value>https://raw.githubusercontent.com/hedge-dev/HMMCodes/build/TokyoOlympics2020.hmm</value>
