@@ -33,12 +33,14 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <Label Content="meowsandstuff"/>
+                    <Label Content="Xinerki"/>
 					<Label Content="Sajid"/>
 					<Label Content="SuperSonic16"/>
 					<Label Content="Aura"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1">
-                    <Label Content="Project lead"/>
+                    <Label Content="Project lead, Producer"/>
+                    <Label Content="Various technical assistance, emotional support"/>
 					<Label Content="Original Hedge Mod Manager"/>
 					<Label Content="Original Hedge Mod Manager"/>
 					<Label Content="Theme Design, Original Logo"/>
