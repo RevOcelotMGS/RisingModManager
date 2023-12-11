@@ -31,7 +31,7 @@ namespace HedgeModManager
         // This should be kept in English as its used in creating reports
         public string UpdateStatus { get; set; }
         public event PropertyChangedEventHandler PropertyChanged;
-        public string ReportRepository { get; set; } = "https://github.com/thesupersonic16/HedgeModManager";
+        public string ReportRepository { get; set; } = "https://github.com/RevOcelotMGS/RisingModManager";
 
         public ExceptionWindow(Exception exception, string extraInfo = "") : this()
         {
